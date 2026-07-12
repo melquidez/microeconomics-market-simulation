@@ -30,15 +30,19 @@ By observing transactions in real time, learners can better understand how marke
 
 ## Market Disruptors
 
-The simulation also includes economic interventions and market disruptions that can affect transactions:
+There are also a few things you can switch on to mess with the market and watch what happens:
 
-* ### Tax Increase
-    When taxes increase, sellers may raise prices to maintain profits. Higher prices can reduce the number of successful transactions as fewer buyers can afford the products.
+* **Tax Increase** — the seller pays a bit more on each sale, so they bump up their price. Some buyers can't afford it anymore, and deals drop.
 
-* ### Price Ceiling
-    A price ceiling sets a maximum legal price for a product. While this may make goods more affordable for buyers, it can reduce seller incentives and potentially lead to shortages or fewer products being offered in the market.
+* **Subsidy** — the government chips in money on each sale, so the seller's cost goes down. They can charge less and still be okay, and more deals happen.
 
->These disruptions allow us to observe how government policies and external factors can influence market efficiency and participant behavior.
+* **Price Ceiling** — a rule that says the price can't go above a certain number. Buyers get a cheaper deal, but sellers may not want to sell as much, so there's less stuff around.
+
+* **Price Floor** — a rule that says the price can't drop below a certain number. Sellers are kept from selling too cheap, but buyers might not want to pay that much, so deals drop.
+
+* **Demand Shock** — a bunch of new buyers suddenly show up, so demand jumps and more dealing happens.
+
+These are just easy ways to poke at the market and see how buyers and sellers react.
 
 ## Installation
 
@@ -66,6 +70,7 @@ npm run dev
 * Price negotiation (bargaining)
 * Adaptive seller pricing behavior
 * Market disruption simulations
+* Set up your own market — pick how many buyers and sellers, what they can afford, what things cost, how much stock, and how tough buyers bargain
 * Educational visualization of economic concepts
 
 ## TODO
