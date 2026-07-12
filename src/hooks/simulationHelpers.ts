@@ -61,10 +61,18 @@ export const findTargetForBuyer = (
 
 
 
-// Calculate bargain price at 95% of buyer's max budget
-
-// TODO make the bargain percentage configurable in the future!
-export const calculateBargainPrice = (buyer: Buyer): number => Math.max(1, Math.floor(buyer.maxBudget * 0.95));
+// Calculate a buyer's opening bargain offer.
+// The buyer anchors on their own willingness-to-pay (maxBudget * bargainPct)
+// but will never offer more than the seller's effective ask (the "sticker").
+// bargainPct is supplied as a percentage (e.g. 95 => 0.95).
+export const calculateBargainPrice = (
+    buyer: Buyer,
+    effectiveAsk: number,
+    bargainPct: number
+): number => {
+    const offer = Math.floor(buyer.maxBudget * (bargainPct / 100));
+    return Math.max(1, Math.min(effectiveAsk, offer));
+};
 
 // Check if bargain offer covers seller's cost plus minimum profit
 export const isBargainAccepted = (proposedPrice: number, cost: number): boolean => proposedPrice >= cost + 1;
@@ -245,6 +253,7 @@ export const settleBuyerAtSeller = (
     animations: Animation[],
     dynamicPricing: boolean,
     bargaining: boolean,
+    bargainPct: number,
     disruptors: DisruptorState,
     getEffectiveAsk: (seller: Seller) => number,
     getEffectiveCost: (seller: Seller) => number,
@@ -314,7 +323,7 @@ export const settleBuyerAtSeller = (
     // If the seller cost is less than or equal to the proposed price, the transaction is successful.
     if (bargaining && target.stock > 0) {
         const cost = getEffectiveCost(target);
-        const proposedPrice = calculateBargainPrice(buyer);
+        const proposedPrice = calculateBargainPrice(buyer, effectiveAsk, bargainPct);
 
         if (isBargainAccepted(proposedPrice, cost)) {
             target.stock--;
@@ -385,6 +394,7 @@ export const updateSimulationFrame = (
     speedMultiplier: number,
     dynamicPricing: boolean,
     bargaining: boolean,
+    bargainPct: number,
     disruptors: DisruptorState,
     getEffectiveAsk: (seller: Seller) => number,
     getEffectiveCost: (seller: Seller) => number,
@@ -452,6 +462,7 @@ export const updateSimulationFrame = (
                 animations,
                 dynamicPricing,
                 bargaining,
+                bargainPct,
                 disruptors,
                 getEffectiveAsk,
                 getEffectiveCost,

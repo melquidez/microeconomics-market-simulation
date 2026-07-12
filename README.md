@@ -70,7 +70,7 @@ npm run dev
 
 ## TODO
 
-* [ ] Add bargain percentage control
+* [x] Add bargain percentage control
 * [ ] Add multiple currency options
 
 ## Notes

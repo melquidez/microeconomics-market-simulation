@@ -15,6 +15,8 @@ interface ControlsProps {
     onSpeedChange: (speed: 'slow' | 'normal' | 'fast') => void;
     onDynamicPricingToggle: (enabled: boolean) => void;
     onBargainingToggle: (enabled: boolean) => void;
+    bargainPct: number;
+    onBargainPctChange: (pct: number) => void;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -27,9 +29,11 @@ export const Controls: React.FC<ControlsProps> = ({
     onReset,
     onNext,
     onSpeedChange,
-    onDynamicPricingToggle,
-    onBargainingToggle,
-}) => {
+        onDynamicPricingToggle,
+        onBargainingToggle,
+        bargainPct,
+        onBargainPctChange,
+    }) => {
     return (
         <div className="panel bg-panel border border-border rounded-lg p-3">
             <div className="section-label text-[10px] uppercase tracking-wider text-muted font-semibold mb-1">
@@ -116,6 +120,20 @@ export const Controls: React.FC<ControlsProps> = ({
                     </label>
                     <span className="text-xs text-muted">{bargaining ? '(ON)' : '(OFF)'}</span>
                 </div>
+                {bargaining && (
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted">Bargain %:</label>
+                        <input
+                            type="range"
+                            min={50}
+                            max={100}
+                            value={bargainPct}
+                            onChange={(e) => onBargainPctChange(Number(e.target.value))}
+                            className="w-24 accent-accent"
+                        />
+                        <span className="text-xs text-muted w-9 text-right">{bargainPct}%</span>
+                    </div>
+                )}
             </div>
         </div>
     );

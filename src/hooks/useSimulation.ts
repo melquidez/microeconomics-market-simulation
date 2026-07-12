@@ -44,6 +44,7 @@ export const useSimulation = (initialConfig: Config) => {
     const [disruptorEvents, setDisruptorEvents] = useState<DisruptorEvent[]>([]);
     const [dynamicPricing, setDynamicPricing] = useState<boolean>(false);
     const [bargaining, setBargaining] = useState<boolean>(false);
+    const [bargainPct, setBargainPct] = useState<number>(95);
     const [speed, setSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
     const [disruptors, setDisruptors] = useState<DisruptorState>({
         priceCeiling: null,
@@ -224,6 +225,7 @@ export const useSimulation = (initialConfig: Config) => {
                 getSpeedMultiplier(),
                 dynamicPricing,
                 bargaining,
+                bargainPct,
                 disruptors,
                 getEffectiveAsk,
                 getEffectiveCost,
@@ -238,7 +240,7 @@ export const useSimulation = (initialConfig: Config) => {
             );
             updateStats();
         },
-        [dynamicPricing, bargaining, disruptors, getSpeedMultiplier, getEffectiveAsk, getEffectiveCost, isSellerActive, findTargetForBuyer, logTransaction, setEquilibriumData, round, updateStats]
+        [dynamicPricing, bargaining, bargainPct, disruptors, getSpeedMultiplier, getEffectiveAsk, getEffectiveCost, isSellerActive, findTargetForBuyer, logTransaction, setEquilibriumData, round, updateStats]
     );
 
     // Check if round should end (all buyers done or no active sellers)
@@ -393,6 +395,8 @@ export const useSimulation = (initialConfig: Config) => {
         getSpeedMultiplier,
         bargaining,
         setBargaining,
+        bargainPct,
+        setBargainPct,
         frame
     };
 };

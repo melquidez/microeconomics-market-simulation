@@ -167,6 +167,8 @@ function App() {
                         onSpeedChange={sim.setSpeed}
                         onDynamicPricingToggle={sim.setDynamicPricing}
                         onBargainingToggle={sim.setBargaining}
+                        bargainPct={sim.bargainPct}
+                        onBargainPctChange={sim.setBargainPct}
                     />
 
                     <Stats {...sim.stats} />
