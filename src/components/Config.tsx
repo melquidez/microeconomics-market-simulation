@@ -9,10 +9,26 @@ interface ConfigProps {
     disabled: boolean;
 }
 
+// Keeps each Min/Max pair honest: a Min can't cross above its Max (and vice-versa).
+const PARTNERS: Partial<Record<keyof ConfigType, keyof ConfigType>> = {
+    budgetMin: 'budgetMax', budgetMax: 'budgetMin',
+    askMin: 'askMax',       askMax: 'askMin',
+    costMin: 'costMax',     costMax: 'costMin',
+};
+
+const isMinKey = (key: keyof ConfigType): boolean => key.endsWith('Min');
+
 export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled }) => {
     const handleChange = (key: keyof ConfigType, value: number) => {
         if (!disabled) {
-            onConfigChange({ ...config, [key]: value });
+            const next: ConfigType = { ...config, [key]: value };
+            const partner = PARTNERS[key];
+            if (partner) {
+                next[key] = isMinKey(key)
+                    ? Math.min(value, config[partner])
+                    : Math.max(value, config[partner]);
+            }
+            onConfigChange(next);
         }
     };
 

@@ -1,10 +1,12 @@
 import { Position } from '../types';
 
 
-// Returns a random integer within the givin range
+// Returns a random integer within the given range (swaps args if min > max)
 
-export const randomInRange = (min: number, max: number): number =>
-    Math.floor(Math.random() * (max - min + 1)) + min;
+export const randomInRange = (min: number, max: number): number => {
+    if (min > max) [min, max] = [max, min];
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
 
 
 
