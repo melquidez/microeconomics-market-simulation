@@ -2,6 +2,9 @@
 
 A simple microeconomics simulation that visualizes how buyers and sellers interact in a marketplace. The project models market transactions where buyers attempt to purchase goods within their budget, while sellers adjust their pricing strategies based on market demand and transaction outcomes.
 
+
+#### [DEMO LINK](https://microeconomics-market-simulation.vercel.app/)
+
 ## Overview
 
 This project was created as a practical way to explore and visualize core microeconomic concepts. Instead of learning solely through graphs and theory, users can observe how economic decisions affect market behavior in a simulated environment.
