@@ -37,6 +37,7 @@ export interface Buyer {
 
 export interface TransactionLogEntry {
     round: number;
+    transactionNum: number;
     buyerId: string;
     sellerId: string;
     sellerOrigAsk: number;

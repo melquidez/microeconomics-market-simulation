@@ -32,6 +32,7 @@ function App() {
     const chartRef = useRef<any>(null);
 
     const [showSummary, setShowSummary] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<number | null>(null);
 
 
     useEffect(() => {
@@ -221,10 +222,11 @@ function App() {
                         clearingData={clearingData}
                         disruptorEvents={sim.disruptorEvents}
                         equilibrium={equilibrium}
+                        onDealClick={setSelectedTransaction}
                     />
                 </div>
 
-                <LogTable logs={sim.transactionLog} />
+                <LogTable logs={sim.transactionLog} selectedTransaction={selectedTransaction} />
             </div>
 
 

@@ -5,9 +5,10 @@ import { faList } from '@fortawesome/free-solid-svg-icons';
 
 interface LogTableProps {
     logs: TransactionLogEntry[];
+    selectedTransaction?: number | null;
 }
 
-export const LogTable: React.FC<LogTableProps> = ({ logs }) => {
+export const LogTable: React.FC<LogTableProps> = ({ logs, selectedTransaction }) => {
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -16,6 +17,13 @@ export const LogTable: React.FC<LogTableProps> = ({ logs }) => {
             containerRef.current.scrollTop = containerRef.current.scrollHeight;
         }
     }, [logs]);
+
+    useEffect(() => {
+        // When a transaction is selected (chart dot or row click), scroll its row into view.
+        if (selectedTransaction == null || !containerRef.current) return;
+        const row = containerRef.current.querySelector(`[data-tnum="${selectedTransaction}"]`);
+        if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [selectedTransaction]);
 
     return (
         <div className="panel bg-panel border border-border rounded-lg p-3 flex-1 min-w-87.5 max-h-85 overflow-hidden flex flex-col">
@@ -46,7 +54,15 @@ export const LogTable: React.FC<LogTableProps> = ({ logs }) => {
                             </tr>
                         ) : (
                             logs.map((entry, idx) => (
-                                <tr key={idx} className={typeof entry.outcome === 'string' && entry.outcome.startsWith('Transacted') ? 'text-gray-200' : 'text-gray-500'}>
+                                <tr
+                                key={idx}
+                                data-tnum={entry.transactionNum}
+                                className={
+                                    (typeof entry.outcome === 'string' && entry.outcome.startsWith('Transacted') ? 'text-gray-200' : 'text-gray-500') +
+                                    (selectedTransaction != null && entry.transactionNum > 0 && entry.transactionNum === selectedTransaction ? ' bg-accent/20' : '') +
+                                    ' cursor-pointer'
+                                }
+                            >
                                     <td className="text-xs py-1 px-2 border-b border-border">{entry.round}</td>
                                     <td className="text-xs py-1 px-2 border-b border-border">{entry.buyerId}</td>
                                     <td className="text-xs py-1 px-2 border-b border-border">{entry.sellerId}</td>

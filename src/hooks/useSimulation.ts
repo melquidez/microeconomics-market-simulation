@@ -135,19 +135,25 @@ export const useSimulation = (initialConfig: Config) => {
             origAsk?: number,
             proposedPrice?: number
         ) => {
-            const entry = buildTransactionEntry(
-                round,
-                buyer,
-                seller,
-                outcome,
-                clearingPrice,
-                cost,
-                profit,
-                surplus,
-                origAsk,
-                proposedPrice
-            );
-            setTransactionLog((prev) => [...prev, entry]);
+            setTransactionLog((prev) => {
+                const transactionNum = isSuccessfulOutcome(outcome)
+                    ? prev.filter((l) => isSuccessfulOutcome(l.outcome)).length + 1
+                    : 0;
+                const entry = buildTransactionEntry(
+                    round,
+                    transactionNum,
+                    buyer,
+                    seller,
+                    outcome,
+                    clearingPrice,
+                    cost,
+                    profit,
+                    surplus,
+                    origAsk,
+                    proposedPrice
+                );
+                return [...prev, entry];
+            });
         },
         [round]
     );
