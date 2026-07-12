@@ -82,3 +82,6 @@ npm run dev
 I studied Microeconomics, and this project reflects my understanding of the concepts based on what I have learned so far. The goal is educational rather than perfectly modeling real-world economies.
 
 Collaborators are welcome to contribute, improve the simulation, and help spread economic learning through visualization and interactive experimentation.
+
+
+> **Note:** Fixed an issue where early commits were accidentally attributed to my computer's local username instead of my GitHub account. 🥺🥺🥺
