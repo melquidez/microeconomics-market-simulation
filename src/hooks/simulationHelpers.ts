@@ -98,6 +98,7 @@ export const updateGlowAndFlashTimers = (sellers: Seller[], buyers: Buyer[], dt:
     });
     buyers.forEach((b) => {
         if (b.flashTimer > 0) b.flashTimer -= dt;
+        if (b.leaveTimer > 0) b.leaveTimer -= dt;
     });
 };
 
@@ -175,6 +176,7 @@ export const checkRoundEndState = (
     if (activeSellers.length === 0 && activeBuyers.length > 0) {
         activeBuyers.forEach((b) => {
             b.status = 'noDeal';
+            b.leaveTimer = 0.4;
             b.targetSeller = null;
             logTransaction(b, null, 'No Deal');
         });
@@ -288,6 +290,7 @@ export const settleBuyerAtSeller = (
         const profit = effectiveAsk - getEffectiveCost(target);
         const surplus = buyer.maxBudget - effectiveAsk;
         buyer.status = 'transacted';
+        buyer.leaveTimer = 0.4;
         target.glowTimer = 0.6;
         buyer.flashTimer = 0.6;
         animations.push({
@@ -330,6 +333,7 @@ export const settleBuyerAtSeller = (
             const profit = proposedPrice - cost;
             const surplus = buyer.maxBudget - proposedPrice;
             buyer.status = 'transacted';
+            buyer.leaveTimer = 0.4;
             target.glowTimer = 0.6;
             buyer.flashTimer = 0.6;
             animations.push({
@@ -435,6 +439,7 @@ export const updateSimulationFrame = (
         // No valid seller available - mark as no deal
         if (!buyer.targetSeller) {
             buyer.status = 'noDeal';
+            buyer.leaveTimer = 0.4;
             animations.push({
                 x: buyer.x,
                 y: buyer.y - 20,
@@ -519,11 +524,13 @@ export const createBuyer = (id: string, position: { x: number; y: number }, budg
     targetSeller: null,
     radius: 14,
     flashTimer: 0,
+    leaveTimer: 0,
 });
 
 // Log transaction details for analytics
 export const buildTransactionEntry = (
     round: number,
+    transactionNum: number,
     buyer: Buyer,
     seller: Seller | null,
     outcome: string,
@@ -535,6 +542,7 @@ export const buildTransactionEntry = (
     proposedPrice?: number
 ): TransactionLogEntry => ({
     round,
+    transactionNum,
     buyerId: buyer.id,
     sellerId: seller ? seller.id : '-',
     sellerOrigAsk: seller ? (origAsk !== undefined ? origAsk : seller.askingPrice) : 0,

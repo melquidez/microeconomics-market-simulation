@@ -33,6 +33,7 @@ export interface Buyer {
     targetSeller: Seller | null;
     radius: number;
     flashTimer: number;
+    leaveTimer: number;
 }
 
 export interface TransactionLogEntry {

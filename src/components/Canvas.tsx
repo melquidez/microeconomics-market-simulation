@@ -78,7 +78,9 @@ export const Canvas: React.FC<CanvasProps> = ({
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 11px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText(`₱${getEffectiveAsk(s)}`, s.x, s.y - s.radius - 8);
+            if (s.status === 'available') {
+                ctx.fillText(`₱${getEffectiveAsk(s)}`, s.x, s.y - s.radius - 8);
+            }
             ctx.fillStyle = '#9ca3af';
             ctx.font = '9px Inter';
             ctx.fillText(s.id, s.x, s.y + s.radius + 13);
@@ -96,9 +98,16 @@ export const Canvas: React.FC<CanvasProps> = ({
 
         // Buyers
         buyers.forEach((b) => {
-            if (b.status === 'transacted') return;
+            // Transacted buyers fade + shrink out over a short "leaving" window
+            // (leaveTimer) instead of vanishing instantly. Canvas keeps drawing
+            // them until the timer reaches 0.
+            const isLeaving = b.status === 'transacted' || b.status === 'noDeal';
+            if (isLeaving && b.leaveTimer <= 0) return;
+            const alpha = isLeaving ? Math.max(0, Math.min(1, b.leaveTimer / 0.4)) : 1;
+            const r = isLeaving ? b.radius * Math.max(0.25, alpha) : b.radius;
+            ctx.globalAlpha = alpha;
             ctx.beginPath();
-            ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+            ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
             ctx.fillStyle = b.status === 'noDeal' ? '#78350f' : '#eab308';
             ctx.strokeStyle = b.status === 'noDeal' ? '#92400e' : '#fde047';
             ctx.lineWidth = 2;
@@ -106,17 +115,17 @@ export const Canvas: React.FC<CanvasProps> = ({
             ctx.stroke();
             if (b.flashTimer > 0) {
                 ctx.beginPath();
-                ctx.arc(b.x, b.y, b.radius + 8, 0, Math.PI * 2);
+                ctx.arc(b.x, b.y, r + 8, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(34,197,94,${(b.flashTimer / 0.6) * 0.6})`;
                 ctx.fill();
             }
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 10px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText(`₱${b.maxBudget}`, b.x, b.y - b.radius - 7);
+            ctx.fillText(`₱${b.maxBudget}`, b.x, b.y - r - 7);
             ctx.fillStyle = '#9ca3af';
             ctx.font = '9px Inter';
-            ctx.fillText(b.id, b.x, b.y + b.radius + 12);
+            ctx.fillText(b.id, b.x, b.y + r + 12);
             if (b.targetSeller && b.status === 'searching') {
                 ctx.beginPath();
                 ctx.moveTo(b.x, b.y);
@@ -127,6 +136,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                 ctx.stroke();
                 ctx.setLineDash([]);
             }
+            ctx.globalAlpha = 1;
         });
 
         // Animations
