@@ -41,7 +41,7 @@ function App() {
     }, [sim.status]);
 
     // Compute supply/demand data for chart
-    const { supplyData, demandData, clearingData } = useMemo(() => {
+    const { supplyData, demandData, clearingData, equilibrium } = useMemo(() => {
         const sellers = sim.sellersRef.current;
         const buyers = sim.buyersRef.current;
         const getEffectiveCost = sim.getEffectiveCost; // now a function (seller) => number
@@ -72,39 +72,60 @@ function App() {
             });
         }
 
+        // Extend both staircases to a shared right edge so neither line looks
+        // "cut off" mid-chart (flat continuation at the last level — textbook style).
+        if (supplyPoints.length && demandPoints.length) {
+            const xMax = Math.max(
+                supplyPoints[supplyPoints.length - 1].x,
+                demandPoints[demandPoints.length - 1].x
+            );
+            const sLast = supplyPoints[supplyPoints.length - 1];
+            if (sLast.x < xMax) supplyPoints.push({ x: xMax, y: sLast.y });
+            const dLast = demandPoints[demandPoints.length - 1];
+            if (dLast.x < xMax) demandPoints.push({ x: xMax, y: dLast.y });
+        }
+
         // Clearing
         const clearing = sim.equilibriumData.map((d) => ({ x: d.transactionNum, y: d.clearingPrice }));
 
-        return { supplyData: supplyPoints, demandData: demandPoints, clearingData: clearing };
+        // Equilibrium: the price where cumulative quantity supplied meets cumulative demand.
+        let equilibrium: { qe: number; pe: number } | null = null;
+        if (nonExited.length && buyers.length) {
+            const qSupply = (p: number) =>
+                nonExited.filter((s) => getEffectiveCost(s) <= p).reduce((sum, s) => sum + s.originalStock, 0);
+            const qDemand = (p: number) => buyers.filter((b) => b.maxBudget >= p).length;
+            const minP = Math.min(...nonExited.map((s) => getEffectiveCost(s)), ...buyers.map((b) => b.maxBudget));
+            const maxP = Math.max(...nonExited.map((s) => getEffectiveCost(s)), ...buyers.map((b) => b.maxBudget));
+            let prevDiff = qSupply(minP) - qDemand(minP);
+            let found = false;
+            for (let p = minP + 1; p <= maxP; p++) {
+                const diff = qSupply(p) - qDemand(p);
+                if ((prevDiff < 0 && diff >= 0) || (prevDiff > 0 && diff <= 0)) {
+                    equilibrium = { qe: qSupply(p), pe: p };
+                    found = true;
+                    break;
+                }
+                prevDiff = diff;
+            }
+            if (!found) {
+                // No interior crossing (excess supply/demand throughout): use price minimizing the gap.
+                let bestP = minP;
+                let bestDiff = Math.abs(prevDiff);
+                for (let p = minP; p <= maxP; p++) {
+                    const d = Math.abs(qSupply(p) - qDemand(p));
+                    if (d < bestDiff) {
+                        bestDiff = d;
+                        bestP = p;
+                    }
+                }
+                equilibrium = { qe: qSupply(bestP), pe: bestP };
+            }
+        }
+
+        return { supplyData: supplyPoints, demandData: demandPoints, clearingData: clearing, equilibrium };
     }, [sim.sellersRef.current, sim.buyersRef.current, sim.equilibriumData, sim.getEffectiveCost]);
 
-    // Update chart when data changes
-    useEffect(() => {
-        if (chartRef.current) {
-            chartRef.current.data.datasets = [
-                { 
-                    label: 'Supply (Cost)',
-                     data: supplyData, borderColor: '#22c55e',
-                     backgroundColor: 'rgba(34,197,94,0.1)',
-                     borderWidth: 2.5, pointRadius: 0, stepped: true, fill: false, tension: 0 
-                },
-                { 
-                    label: 'Demand (WTP)',
-                     data: demandData, borderColor: '#ef4444',
-                     backgroundColor: 'rgba(239,68,68,0.1)',
-                     borderWidth: 2.5, pointRadius: 0, stepped: true, fill: false, tension: 0 
-                },
-                { 
-                    label: 'Clearing Price',
-                     data: clearingData, borderColor: '#4da6ff',
-                     backgroundColor: '#4da6ff',
-                     pointRadius: clearingData.length <= 30 ? 4 : 2, pointBackgroundColor: '#4da6ff',
-                     showLine: false, type: 'line' 
-                },
-            ];
-            chartRef.current.update();
-        }
-    }, [supplyData, demandData, clearingData]);
+    // Chart updates reactively through <Chart> props (datasets + annotations).
 
     return (
         <div className="min-h-screen flex flex-col items-center py-4 px-3 bg-[#14171c] text-gray-300 font-['Inter']">
@@ -188,7 +209,7 @@ function App() {
             </div>
 
             <div className="w-full max-w-350 flex gap-3 mt-6 flex-wrap lg:flex-nowrap">
-                <div className="panel bg-panel border border-border rounded-lg p-3 flex-1 min-w-100" style={{ minHeight: '300px' }}>
+                <div className="panel bg-panel border border-border rounded-lg p-3 flex-1 min-w-100" style={{ minHeight: '440px' }}>
                     <div className="section-label text-[10px] uppercase tracking-wider text-muted font-semibold mb-1">
                         <FontAwesomeIcon icon={faChartArea} className="text-accent mr-1" />
                         Live Equilibrium Curve
@@ -199,6 +220,7 @@ function App() {
                         demandData={demandData}
                         clearingData={clearingData}
                         disruptorEvents={sim.disruptorEvents}
+                        equilibrium={equilibrium}
                     />
                 </div>
 
