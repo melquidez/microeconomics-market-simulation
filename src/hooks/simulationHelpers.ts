@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { Buyer, Seller, DisruptorState, TransactionLogEntry, SimStatus } from '../types';
 
+// Animation state for visual effects
 export type Animation = {
     x: number;
     y: number;
@@ -9,6 +10,7 @@ export type Animation = {
     maxTimer: number;
 };
 
+// Calculate seller's effective cost including taxes/subsidies from disruptors
 export const getEffectiveCost = (seller: Seller, disruptors: DisruptorState): number => {
     let cost = seller.costOfGoods;
     if (disruptors.tax) cost += disruptors.tax.amount;
@@ -16,6 +18,7 @@ export const getEffectiveCost = (seller: Seller, disruptors: DisruptorState): nu
     return Math.max(0, cost);
 };
 
+// Calculate seller's effective asking price after applying price ceiling/floor
 export const getEffectiveAsk = (seller: Seller, disruptors: DisruptorState): number => {
     let ask = seller.askingPrice;
     if (disruptors.priceCeiling && ask > disruptors.priceCeiling.amount) ask = disruptors.priceCeiling.amount;
@@ -23,12 +26,14 @@ export const getEffectiveAsk = (seller: Seller, disruptors: DisruptorState): num
     return ask;
 };
 
+// Check if seller is available to transact (not sold out, has stock, cost viability)
 export const isSellerActive = (seller: Seller, disruptors: DisruptorState): boolean => {
     if (seller.status === 'soldOut' || seller.status === 'exited') return false;
     if (disruptors.priceCeiling && disruptors.priceCeiling.amount < getEffectiveCost(seller, disruptors)) return false;
     return seller.stock > 0;
 };
 
+// Find closest active seller not yet visited by buyer
 export const findTargetForBuyer = (
     buyer: Buyer,
     sellers: Seller[],
@@ -38,9 +43,14 @@ export const findTargetForBuyer = (
     let bestDist = Infinity;
     for (const s of sellers) {
         if (!isSellerActiveFn(s) || buyer.visitedSellers.has(s.id)) continue;
+        
         const dx = s.x - buyer.x;
         const dy = s.y - buyer.y;
+        
+        
         const dist = Math.sqrt(dx * dx + dy * dy);
+
+
         if (dist < bestDist) {
             bestDist = dist;
             best = s;
@@ -49,12 +59,21 @@ export const findTargetForBuyer = (
     return best;
 };
 
+
+
+// Calculate bargain price at 95% of buyer's max budget
+
+// TODO make the bargain percentage configurable in the future!
 export const calculateBargainPrice = (buyer: Buyer): number => Math.max(1, Math.floor(buyer.maxBudget * 0.95));
 
+// Check if bargain offer covers seller's cost plus minimum profit
 export const isBargainAccepted = (proposedPrice: number, cost: number): boolean => proposedPrice >= cost + 1;
 
+// Check if transaction was successful (distinguishes real deals from rejections)
 export const isSuccessfulOutcome = (outcome: string): boolean => outcome.startsWith('Transacted');
 
+
+// Remove expired animations based on elapsed time
 export const advanceAnimations = (animations: Animation[], dt: number): void => {
     for (let i = animations.length - 1; i >= 0; i -= 1) {
         animations[i].timer -= dt;
@@ -62,6 +81,9 @@ export const advanceAnimations = (animations: Animation[], dt: number): void => 
     }
 };
 
+
+
+// Update visual timers for glow and flash effects
 export const updateGlowAndFlashTimers = (sellers: Seller[], buyers: Buyer[], dt: number): void => {
     sellers.forEach((s) => {
         if (s.glowTimer > 0) s.glowTimer -= dt;
@@ -70,6 +92,11 @@ export const updateGlowAndFlashTimers = (sellers: Seller[], buyers: Buyer[], dt:
         if (b.flashTimer > 0) b.flashTimer -= dt;
     });
 };
+
+
+
+// Handle price ceiling/floor effects
+// Exit sellers who can't profit, reassign buyers
 
 export const applyDisruptorEffects = (
     sellers: Seller[],
@@ -94,11 +121,13 @@ export const applyDisruptorEffects = (
             }
         }
     } else {
+        // Re-activate sellers when price ceiling is removed
         for (const s of sellers) {
             if (s.status === 'exited' && s.stock > 0) s.status = 'available';
         }
     }
 
+    // Reassign buyers to new targets if needed
     for (const b of buyers) {
         if (b.status === 'searching') {
             b.targetSeller = findTargetForBuyer(b, sellers);
@@ -106,6 +135,9 @@ export const applyDisruptorEffects = (
     }
 };
 
+
+
+// Determine if round should end (all buyers done or no active sellers remain)
 export const checkRoundEndState = (
     buyers: Buyer[],
     sellers: Seller[],
@@ -125,10 +157,12 @@ export const checkRoundEndState = (
     setStatus: Dispatch<SetStateAction<SimStatus>>
 ): boolean => {
     const activeBuyers = buyers.filter((b) => b.status === 'searching');
+    // All buyers done searching and no animations pending
     if (activeBuyers.length === 0 && animations.length === 0) {
         setStatus('roundEnd');
         return true;
     }
+    // No sellers available but buyers still searching - mark buyers as no-deal
     const activeSellers = sellers.filter((s) => isSellerActive(s));
     if (activeSellers.length === 0 && activeBuyers.length > 0) {
         activeBuyers.forEach((b) => {
@@ -142,6 +176,7 @@ export const checkRoundEndState = (
     return false;
 };
 
+// Exit sellers who can't operate under price ceiling constraints
 export const applyCeilingExitEffects = (
     sellers: Seller[],
     animations: Animation[],
@@ -164,6 +199,10 @@ export const applyCeilingExitEffects = (
     }
 };
 
+
+
+// Increase seller's asking price after successful transaction
+// This is the dynamic pricing, which raises the price by 5% after each sale.
 const applySellerDynamicPricing = (
     target: Seller,
     dynamicPricing: boolean,
@@ -176,6 +215,9 @@ const applySellerDynamicPricing = (
     target.askingPrice = Math.max(newAsk, target.askingPrice);
 };
 
+// Decrease seller's asking price after rejected offer.
+// part of dyanamic pricing, the seller will lower their price by 5% after a buyer rejects the asking price.
+// TODO make the buyer return to the same seller after a rejection one more time to try again?
 const adjustAskAfterRejection = (
     target: Seller,
     dynamicPricing: boolean,
@@ -193,6 +235,10 @@ const adjustAskAfterRejection = (
     target.askingPrice = Math.min(newAsk, target.askingPrice);
 };
 
+
+
+
+// Execute transaction between buyer and seller: handle pricing, profit calc, and animations
 export const settleBuyerAtSeller = (
     buyer: Buyer,
     target: Seller,
@@ -220,12 +266,14 @@ export const settleBuyerAtSeller = (
     const origAsk = target.askingPrice;
     const effectiveAsk = getEffectiveAsk(target);
 
+    // Seller no longer active - reject and move on
     if (!isSellerActive(target)) {
         buyer.visitedSellers.add(target.id);
         buyer.targetSeller = null;
         return;
     }
 
+    // Buyer can afford asking price - instant transaction
     if (buyer.maxBudget >= effectiveAsk && target.stock > 0) {
         target.stock--;
         const profit = effectiveAsk - getEffectiveCost(target);
@@ -259,6 +307,11 @@ export const settleBuyerAtSeller = (
         return;
     }
 
+
+
+    // Bargaining enabled - try reduced price
+    // a buyer can propose a bargain price at 95% of their max budget.
+    // If the seller cost is less than or equal to the proposed price, the transaction is successful.
     if (bargaining && target.stock > 0) {
         const cost = getEffectiveCost(target);
         const proposedPrice = calculateBargainPrice(buyer);
@@ -297,6 +350,7 @@ export const settleBuyerAtSeller = (
             return;
         }
 
+        // Bargain rejected - mark seller as visited
         buyer.visitedSellers.add(target.id);
         animations.push({
             x: target.x,
@@ -310,6 +364,7 @@ export const settleBuyerAtSeller = (
         return;
     }
 
+    // No deal - mark seller as visited and adjust asking price if dynamic pricing enabled
     buyer.visitedSellers.add(target.id);
     adjustAskAfterRejection(target, dynamicPricing, disruptors, getEffectiveCost);
     animations.push({
@@ -322,6 +377,9 @@ export const settleBuyerAtSeller = (
     buyer.targetSeller = null;
 };
 
+
+
+// Main simulation loop: move buyers toward targets, handle transactions, apply disruptors
 export const updateSimulationFrame = (
     dt: number,
     speedMultiplier: number,
@@ -351,16 +409,20 @@ export const updateSimulationFrame = (
 ): void => {
     const effectiveSpeed = 90 * speedMultiplier * dt;
 
+    // Update visual effects timers
     advanceAnimations(animations, dt);
     updateGlowAndFlashTimers(sellers, buyers, dt);
 
+    // Process each searching buyer
     for (const buyer of buyers) {
         if (buyer.status !== 'searching') continue;
 
+        // Find new target if current one is gone or no target assigned
         if (!buyer.targetSeller || !isSellerActive(buyer.targetSeller)) {
             buyer.targetSeller = findTargetForBuyer(buyer, sellers);
         }
 
+        // No valid seller available - mark as no deal
         if (!buyer.targetSeller) {
             buyer.status = 'noDeal';
             animations.push({
@@ -374,11 +436,13 @@ export const updateSimulationFrame = (
             continue;
         }
 
+        // Calculate distance to target and move toward it
         const target = buyer.targetSeller;
         const dx = target.x - buyer.x;
         const dy = target.y - buyer.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
+        // Close enough to settle transaction
         if (dist <= 28) {
             buyer.x = target.x;
             buyer.y = target.y;
@@ -397,6 +461,8 @@ export const updateSimulationFrame = (
                 round
             );
         } else {
+
+            // Move incrementally toward target
             const moveX = (dx / dist) * effectiveSpeed;
             const moveY = (dy / dist) * effectiveSpeed;
             if (Math.abs(moveX) >= Math.abs(dx) && Math.abs(moveY) >= Math.abs(dy)) {
@@ -406,12 +472,15 @@ export const updateSimulationFrame = (
                 buyer.x += moveX;
                 buyer.y += moveY;
             }
+
         }
     }
 
+    // Apply price ceiling effects to seller base
     applyCeilingExitEffects(sellers, animations, disruptors, getEffectiveCost);
 };
 
+// Create a new seller with initial state
 export const createSeller = (id: string, position: { x: number; y: number }, cost: number, ask: number, stock: number): Seller => ({
     id,
     x: position.x,
@@ -427,6 +496,7 @@ export const createSeller = (id: string, position: { x: number; y: number }, cos
     glowTimer: 0,
 });
 
+// Create a new buyer with initial state
 export const createBuyer = (id: string, position: { x: number; y: number }, budget: number): Buyer => ({
     id,
     x: position.x,
@@ -440,6 +510,7 @@ export const createBuyer = (id: string, position: { x: number; y: number }, budg
     flashTimer: 0,
 });
 
+// Log transaction details for analytics
 export const buildTransactionEntry = (
     round: number,
     buyer: Buyer,

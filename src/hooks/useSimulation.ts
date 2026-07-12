@@ -35,10 +35,7 @@ import {
 } from './simulationActions';
 
 export const useSimulation = (initialConfig: Config) => {
-
-
-
-    // ---------- State ----------
+    // Track simulation progress and market state
     const [config, setConfig] = useState<Config>(initialConfig);
     const [status, setStatus] = useState<SimStatus>('idle');
     const [round, setRound] = useState<number>(1);
@@ -63,14 +60,14 @@ export const useSimulation = (initialConfig: Config) => {
         efficiency: '--',
     });
 
-
+    // Force re-render on each frame (for canvas updates)
     const [frame, setFrame] = useState(0); 
 
 
     //
 
 
-    // ---- Helper functions that close over disruptors ----
+    // Memoized helpers in current disruptors
     const getEffectiveCost = useCallback(
         (seller: Seller) => helperGetEffectiveCost(seller, disruptors),
         [disruptors]
@@ -94,22 +91,23 @@ export const useSimulation = (initialConfig: Config) => {
 
 
 
-    // Mutable refs for agents and animations (no re-render)
+    // Mutable refs for agents and animations (skip re-renders, just update on each frame)
     const sellersRef = useRef<Seller[]>([]);
     const buyersRef = useRef<Buyer[]>([]);
     const animationsRef = useRef<{ x: number; y: number; type: string; timer: number; maxTimer: number }[]>([]);
 
-    // Animation frame ref
+    // Animation loop tracking
     const animationFrameRef = useRef<number | null>(null);
     const lastTimeRef = useRef<number>(performance.now());
 
-    // ---------- Internal helpers ----------
+    // Convert speed setting to simulation multiplier
     const getSpeedMultiplier = useCallback(() => {
         if (speed === 'slow') return 0.5;
         if (speed === 'fast') return 2.0;
         return 1.0;
     }, [speed]);
 
+    // Run disruptor logic (price ceiling/floor effects, buyer reassignment)
     const applyDisruptorEffects = useCallback(() => {
         helperApplyDisruptorEffects(
             sellersRef.current,
@@ -121,6 +119,7 @@ export const useSimulation = (initialConfig: Config) => {
         );
     }, [disruptors, getEffectiveCost, findTargetForBuyer]);
 
+    // Record transaction in log for later analysis
     const logTransaction = useCallback(
         (
             buyer: Buyer,
@@ -150,25 +149,19 @@ export const useSimulation = (initialConfig: Config) => {
         [round]
     );
 
-    const updateStats = useCallback(() => {
 
+
+    // Compute market stats from transaction log and current agent states
+    const updateStats = useCallback(() => {
         const trans = transactionLog.filter((l) => isSuccessfulOutcome(l.outcome)).length;
         const noDeals = buyersRef.current.filter((b) => b.status === 'noDeal').length;
         const tlogs = transactionLog.filter((l) => isSuccessfulOutcome(l.outcome));
 
-
-
         const avg = tlogs.length ? (tlogs.reduce((s, l) => s + l.clearingPrice, 0) / tlogs.length).toFixed(1) : '0';
 
         setStats({
-
             transactions: trans,
             noDeals,
-
-
-
-            // TODO can change currency symbol
-
             avgPrice: avg !== '0' ? '₱' + avg : '0',
             activeBuyers: buyersRef.current.filter((b) => b.status === 'searching').length,
             activeSellers: sellersRef.current.filter((s) => isSellerActive(s)).length,
@@ -179,19 +172,17 @@ export const useSimulation = (initialConfig: Config) => {
 
 
 
-    // ---------- Spawn agents ----------
-    
+    // Create initial agents with random positions and attributes based on config
+    // Note: should I make the seller in fixed position?
+
     const spawnAgents = useCallback(
         (cfg: Config) => {
-        
             const newSellers: Seller[] = [];
-            
-        
             const newBuyers: Buyer[] = [];
-
             const positions: Position[] = [];
 
-        
+            // Spawn sellers and buyers at non-overlapping positions
+
             for (let i = 0; i < cfg.numSellers; i++) {
                 const pos = findNonOverlappingPosition(positions);
                 positions.push(pos);
@@ -225,7 +216,7 @@ export const useSimulation = (initialConfig: Config) => {
         [applyDisruptorEffects]
     );
 
-    // ---------- Update loop ----------
+    // Run one frame of simulation (move buyers, handle transactions, apply disruptors)
     const updateSimulation = useCallback(
         (dt: number) => {
             updateSimulationFrame(
@@ -250,6 +241,7 @@ export const useSimulation = (initialConfig: Config) => {
         [dynamicPricing, bargaining, disruptors, getSpeedMultiplier, getEffectiveAsk, getEffectiveCost, isSellerActive, findTargetForBuyer, logTransaction, setEquilibriumData, round, updateStats]
     );
 
+    // Check if round should end (all buyers done or no active sellers)
     const checkRoundEnd = useCallback(() => {
         return checkRoundEndState(
             buyersRef.current,
@@ -261,6 +253,7 @@ export const useSimulation = (initialConfig: Config) => {
         );
     }, [isSellerActive, logTransaction, setStatus]);
 
+    // Main animation loop: run sim step, check end state, trigger canvas redraw
     const gameLoop = useCallback(
         (timestamp: number) => {
             if (status === 'running') {
@@ -269,14 +262,15 @@ export const useSimulation = (initialConfig: Config) => {
                 updateSimulation(dt);
                 checkRoundEnd();
             }
-            // Continue loop even if paused (just for drawing)
+            // Keep looping even when paused (for canvas rendering)
             animationFrameRef.current = requestAnimationFrame(gameLoop);
+            // Force re-render to update canvas
             setFrame((f) => f + 1);
         },
         [status, updateSimulation, checkRoundEnd]
     );
 
-    // ---------- Public actions ----------
+    // Public action handlers
     const startRound = useCallback(
         () => startRoundAction(status, config, spawnAgents, setRound, setStatus, lastTimeRef, animationFrameRef, gameLoop),
         [status, config, spawnAgents, setRound, setStatus, lastTimeRef, animationFrameRef, gameLoop]
@@ -311,6 +305,7 @@ export const useSimulation = (initialConfig: Config) => {
         [status, setStatus, setRound, spawnAgents, config]
     );
 
+    // Mark a transaction with a label for disruptor timeline
     const addDisruptorMarker = useCallback(
         (label: string) => addDisruptorMarkerAction(equilibriumData, setDisruptorEvents, label),
         [equilibriumData, setDisruptorEvents]
@@ -321,6 +316,7 @@ export const useSimulation = (initialConfig: Config) => {
         [setDisruptors, addDisruptorMarker]
     );
 
+    // Add new buyers mid-round to simulate demand shock
     const demandShock = useCallback(
         (num: number) => {
             const positions = [...sellersRef.current, ...buyersRef.current].map((a) => ({ x: a.x, y: a.y }));
@@ -337,18 +333,18 @@ export const useSimulation = (initialConfig: Config) => {
         [config, addDisruptorMarker]
     );
 
-    // ---------- Effects ----------
-    // Apply disruptor effects whenever disruptors change
+    // Side effects
+    // Re-apply disruptor logic when they change
     useEffect(() => {
         applyDisruptorEffects();
     }, [disruptors, applyDisruptorEffects]);
 
-    // Update stats when transaction log changes
+    // Recalculate stats after any transaction
     useEffect(() => {
         updateStats();
     }, [transactionLog, updateStats]);
 
-    // Cleanup animation frame on unmount
+    // Start animation loop on mount, cleanup on unmount
     useEffect(() => {
         if (!animationFrameRef.current) {
             animationFrameRef.current = requestAnimationFrame(gameLoop);
@@ -361,9 +357,9 @@ export const useSimulation = (initialConfig: Config) => {
         };
     }, [gameLoop]);
 
-    // Return state and actions
+    // Export hook state and actions for UI
     return {
-        // State
+        // State for reading
         status,
         round,
         transactionLog,
@@ -374,26 +370,27 @@ export const useSimulation = (initialConfig: Config) => {
         disruptors,
         stats,
         config,
-        // Refs //(for canvas drawing)
+        // Agent refs for canvas drawing
         sellersRef,
         buyersRef,
         animationsRef,
-        // Actions
+        // State setters
         setConfig,
         setDynamicPricing,
         setSpeed,
+        // Action handlers
         startRound,
         togglePause,
         resetSimulation,
         nextRound,
         toggleDisruptor,
         demandShock,
-        spawnAgents, // useful for re-spawning after config change
-        // Data for chart
+        spawnAgents,
+        // Helper functions
         getEffectiveCost,
         getEffectiveAsk,
         isSellerActive,
-        getSpeedMultiplier, // if needed
+        getSpeedMultiplier,
         bargaining,
         setBargaining,
         frame

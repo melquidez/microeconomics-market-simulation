@@ -31,7 +31,7 @@ function App() {
     const sim = useSimulation(initialConfig);
     const chartRef = useRef<any>(null);
 
-    const [showSummary, setShowSummary] = useState(false); 
+    const [showSummary, setShowSummary] = useState(false);
 
 
     useEffect(() => {
@@ -82,9 +82,25 @@ function App() {
     useEffect(() => {
         if (chartRef.current) {
             chartRef.current.data.datasets = [
-                { label: 'Supply (Cost)', data: supplyData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2.5, pointRadius: 0, stepped: true, fill: false, tension: 0 },
-                { label: 'Demand (WTP)', data: demandData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 2.5, pointRadius: 0, stepped: true, fill: false, tension: 0 },
-                { label: 'Clearing Price', data: clearingData, borderColor: '#4da6ff', backgroundColor: '#4da6ff', pointRadius: clearingData.length <= 30 ? 4 : 2, pointBackgroundColor: '#4da6ff', showLine: false, type: 'line' },
+                { 
+                    label: 'Supply (Cost)',
+                     data: supplyData, borderColor: '#22c55e',
+                     backgroundColor: 'rgba(34,197,94,0.1)',
+                     borderWidth: 2.5, pointRadius: 0, stepped: true, fill: false, tension: 0 
+                },
+                { 
+                    label: 'Demand (WTP)',
+                     data: demandData, borderColor: '#ef4444',
+                     backgroundColor: 'rgba(239,68,68,0.1)',
+                     borderWidth: 2.5, pointRadius: 0, stepped: true, fill: false, tension: 0 
+                },
+                { 
+                    label: 'Clearing Price',
+                     data: clearingData, borderColor: '#4da6ff',
+                     backgroundColor: '#4da6ff',
+                     pointRadius: clearingData.length <= 30 ? 4 : 2, pointBackgroundColor: '#4da6ff',
+                     showLine: false, type: 'line' 
+                },
             ];
             chartRef.current.update();
         }
@@ -98,7 +114,7 @@ function App() {
                     <p className="text-xs text-muted">Watch the market find its way!</p>
                 </div>
 
-                
+
                 <div className="flex gap-2 items-center">
                     <span className="stat-badge text-white font-semibold bg-[#2a2d35] rounded-md px-3 py-1 text-sm">
                         Round {sim.round}

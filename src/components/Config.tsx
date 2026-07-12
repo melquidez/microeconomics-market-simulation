@@ -16,10 +16,10 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
         }
     };
 
-    // Debug log – remove after confirming it works
-    React.useEffect(() => {
-        console.log('Config updated:', config);
-    }, [config]);
+    // Debug log
+    // React.useEffect(() => {
+    //     console.log('Config updated:', config);
+    // }, [config]);
 
     return (
         <div className="panel bg-panel border border-border rounded-lg p-3">
