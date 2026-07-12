@@ -100,6 +100,8 @@ export const useSimulation = (initialConfig: Config) => {
     // Animation loop tracking
     const animationFrameRef = useRef<number | null>(null);
     const lastTimeRef = useRef<number>(performance.now());
+    // Keeps Demand Shock buyer IDs unique across every shock (never resets).
+    const shockIdRef = useRef<number>(0);
 
     // Convert speed setting to simulation multiplier
     const getSpeedMultiplier = useCallback(() => {
@@ -326,7 +328,8 @@ export const useSimulation = (initialConfig: Config) => {
                 const pos = findNonOverlappingPosition(positions);
                 positions.push(pos);
                 const budget = randomInRange(config.budgetMin, config.budgetMax);
-                const newBuyer = createBuyer(`B-Shock${i + 1}`, pos, budget);
+                shockIdRef.current += 1;
+                const newBuyer = createBuyer(`B-Shock${shockIdRef.current}`, pos, budget);
                 newBuyer.targetSeller = findTargetForBuyer(newBuyer, sellersRef.current);
                 buyersRef.current.push(newBuyer);
             }
