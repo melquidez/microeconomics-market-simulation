@@ -26,7 +26,7 @@ Microeconomics concepts can sometimes be difficult to understand through equatio
 * Showing how individual decisions affect the overall market.
 * Providing an interactive learning experience that encourages experimentation.
 
-By observing transactions in real time, learners can better understand how markets naturally adjust and respond to changing conditions.
+> By observing transactions in real time, learners can better understand how markets naturally adjust and respond to changing conditions.
 
 ## Market Disruptors
 
