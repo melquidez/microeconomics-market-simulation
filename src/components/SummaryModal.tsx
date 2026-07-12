@@ -48,7 +48,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
       onClick={onClose} // Clicking backdrop closes modal
     >
       <div
-        className="bg-[#21252b] border border-[#444] rounded-xl p-6 max-w-md w-full shadow-2xl"
+        className="bg-panel border border-border rounded-xl p-6 max-w-md w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
       >
         <h2 className="text-xl font-bold text-white mb-3">
@@ -56,27 +56,27 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
           Round Summary
         </h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="stat-badge bg-[#2a2d35] rounded-md px-3 py-1">
+          <div className="stat-badge bg-panel rounded-md px-3 py-1">
             <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 mr-1" />
             Transactions: <b className="text-success">{totalTrans}</b>
           </div>
-          <div className="stat-badge bg-[#2a2d35] rounded-md px-3 py-1">
+          <div className="stat-badge bg-panel rounded-md px-3 py-1">
             <FontAwesomeIcon icon={faClose} className="text-red-500 mr-1" />
             No-Deals: <b className="text-danger">{totalNoDeal}</b>
           </div>
-          <div className="stat-badge bg-[#2a2d35] rounded-md px-3 py-1">
+          <div className="stat-badge bg-panel rounded-md px-3 py-1">
             <FontAwesomeIcon icon={faMoneyBill} className="text-yellow-500 mr-1" />
             Avg Clear Price: <b className="text-accent">₱{avgPrice.toFixed(1)}</b>
           </div>
-          <div className="stat-badge bg-[#2a2d35] rounded-md px-3 py-1">
+          <div className="stat-badge bg-panel rounded-md px-3 py-1">
             <FontAwesomeIcon icon={faShoppingCart} className="text-blue-500 mr-1" />
             Consumer Surplus: <b>₱{totalConsumerSurplus.toFixed(0)}</b>
           </div>
-          <div className="stat-badge bg-[#2a2d35] rounded-md px-3 py-1">
-            <FontAwesomeIcon icon={faBuilding} className='text-gray-400 mr-1' />
+          <div className="stat-badge bg-panel rounded-md px-3 py-1">
+            <FontAwesomeIcon icon={faBuilding} className='text-muted mr-1' />
             Producer Surplus: <b>₱{totalProducerSurplus.toFixed(0)}</b>
           </div>
-          <div className="stat-badge bg-[#2a2d35] rounded-md px-3 py-1 col-span-2">
+          <div className="stat-badge bg-panel rounded-md px-3 py-1 col-span-2">
             <FontAwesomeIcon icon={faChartArea} className="text-green-500 mr-1" />
             Efficiency: <b>{efficiency}%</b> (transactions / total buyers)
           </div>

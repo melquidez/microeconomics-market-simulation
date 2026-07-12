@@ -89,7 +89,7 @@ export const Controls: React.FC<ControlsProps> = ({
                 <div className="flex items-center gap-2">
                     <label className="text-xs text-muted">Speed:</label>
                     <select
-                        className="bg-[#2a2d35] border border-[#444] text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
                         value={speed}
                         onChange={(e) => onSpeedChange(e.target.value as 'slow' | 'normal' | 'fast')}
                     >
@@ -99,7 +99,7 @@ export const Controls: React.FC<ControlsProps> = ({
                     </select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
                         <input
                             type="checkbox"
                             checked={dynamicPricing}
@@ -110,7 +110,7 @@ export const Controls: React.FC<ControlsProps> = ({
                     <span className="text-xs text-muted">{dynamicPricing ? '(ON)' : '(OFF)'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
                         <input
                             type="checkbox"
                             checked={bargaining}

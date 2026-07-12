@@ -45,7 +45,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                 <div>
-                    <label className="text-gray-400">Buyers: {config.numBuyers}</label>
+                    <label className="text-muted">Buyers: {config.numBuyers}</label>
                     <input
                         type="range"
                         min="3"
@@ -57,7 +57,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div>
-                    <label className="text-gray-400">Sellers: {config.numSellers}</label>
+                    <label className="text-muted">Sellers: {config.numSellers}</label>
                     <input
                         type="range"
                         min="2"
@@ -69,7 +69,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div>
-                    <label className="text-gray-400">Budget Min: {config.budgetMin}</label>
+                    <label className="text-muted">Budget Min: {config.budgetMin}</label>
                     <input
                         type="range"
                         min="20"
@@ -81,7 +81,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div>
-                    <label className="text-gray-400">Budget Max: {config.budgetMax}</label>
+                    <label className="text-muted">Budget Max: {config.budgetMax}</label>
                     <input
                         type="range"
                         min="50"
@@ -93,7 +93,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div>
-                    <label className="text-gray-400">Ask Price Min: {config.askMin}</label>
+                    <label className="text-muted">Ask Price Min: {config.askMin}</label>
                     <input
                         type="range"
                         min="30"
@@ -105,7 +105,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div>
-                    <label className="text-gray-400">Ask Price Max: {config.askMax}</label>
+                    <label className="text-muted">Ask Price Max: {config.askMax}</label>
                     <input
                         type="range"
                         min="50"
@@ -117,7 +117,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div>
-                    <label className="text-gray-400">Cost Min: {config.costMin}</label>
+                    <label className="text-muted">Cost Min: {config.costMin}</label>
                     <input
                         type="range"
                         min="10"
@@ -129,7 +129,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div>
-                    <label className="text-gray-400">Cost Max: {config.costMax}</label>
+                    <label className="text-muted">Cost Max: {config.costMax}</label>
                     <input
                         type="range"
                         min="30"
@@ -141,7 +141,7 @@ export const Config: React.FC<ConfigProps> = ({ config, onConfigChange, disabled
                     />
                 </div>
                 <div className="col-span-2">
-                    <label className="text-gray-400">Stock per Seller: {config.stockPerSeller}</label>
+                    <label className="text-muted">Stock per Seller: {config.stockPerSeller}</label>
                     <input
                         type="range"
                         min="1"

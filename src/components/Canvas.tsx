@@ -160,5 +160,5 @@ export const Canvas: React.FC<CanvasProps> = ({
         );
     }, [sellers, buyers, animations, round, isSellerActive, getEffectiveAsk, frame]);
 
-    return <canvas ref={canvasRef} width="780" height="540" className="rounded-xl bg-[#1a1d23] shadow-lg block" />;
+    return <canvas ref={canvasRef} width="780" height="540" className="rounded-xl bg-panel shadow-lg block" />;
 };

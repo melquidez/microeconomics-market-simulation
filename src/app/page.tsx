@@ -128,7 +128,7 @@ function App() {
     // Chart updates reactively through <Chart> props (datasets + annotations).
 
     return (
-        <div className="min-h-screen flex flex-col items-center py-4 px-3 bg-[#14171c] text-gray-300 font-['Inter']">
+        <div className="min-h-screen flex flex-col items-center py-4 px-3 bg-panel text-gray-300 font-['Inter']">
             <header className="w-full max-w-full flex items-center justify-between mb-3 px-2">
                 <div>
                     <h1 className="text-2xl font-bold text-white tracking-tight">Microeconomics Simulation</h1>
@@ -137,7 +137,7 @@ function App() {
 
 
                 <div className="flex gap-2 items-center">
-                    <span className="stat-badge text-white font-semibold bg-[#2a2d35] rounded-md px-3 py-1 text-sm">
+                    <span className="stat-badge text-white font-semibold bg-panel rounded-md px-3 py-1 text-sm">
                         Round {sim.round}
                     </span>
                     <span

@@ -51,7 +51,7 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
                         defaultValue={100}
                         min={10}
                         max={300}
-                        className="w-16 bg-[#2a2d35] border border-[#444] text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -73,7 +73,7 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
                         defaultValue={80}
                         min={10}
                         max={300}
-                        className="w-16 bg-[#2a2d35] border border-[#444] text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -95,7 +95,7 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
                         defaultValue={15}
                         min={1}
                         max={100}
-                        className="w-16 bg-[#2a2d35] border border-[#444] text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -117,7 +117,7 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
                         defaultValue={15}
                         min={1}
                         max={100}
-                        className="w-16 bg-[#2a2d35] border border-[#444] text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -139,7 +139,7 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
                         defaultValue={5}
                         min={1}
                         max={20}
-                        className="w-16 bg-[#2a2d35] border border-[#444] text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
