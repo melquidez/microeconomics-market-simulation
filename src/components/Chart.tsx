@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { DisruptorEvent } from '../types';
+import { DealPriceChart } from './DealPriceChart';
 
 ChartJS.register(
     CategoryScale,
@@ -33,9 +34,10 @@ interface ChartProps {
     clearingData: { x: number; y: number }[];
     disruptorEvents: DisruptorEvent[];
     equilibrium: { qe: number; pe: number } | null;
+    onDealClick?: (transactionNum: number) => void;
 }
 
-export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clearingData, disruptorEvents, equilibrium }, ref) => {
+export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, onDealClick }, ref) => {
     // Top chart: equilibrium cross only (quantity space — no time events here).
     const mainAnnotations = useMemo(() => {
         const ann: Record<string, any> = {};
@@ -82,32 +84,6 @@ export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clea
         return ann;
     }, [equilibrium]);
 
-    // Bottom chart: disruptor shocks are time events, so they belong on the
-    // "deal order" axis (x = transaction number), not the quantity axis.
-    const clearingAnnotations = useMemo(() => {
-        const ann: Record<string, any> = {};
-        disruptorEvents.forEach((evt, i) => {
-            ann[`d${i}`] = {
-                type: 'line',
-                scaleID: 'x',
-                value: evt.transactionNum,
-                borderColor: 'rgba(239,68,68,0.7)',
-                borderWidth: 2,
-                borderDash: [6, 4],
-                label: {
-                    content: evt.label,
-                    enabled: true,
-                    position: 'start',
-                    backgroundColor: 'rgba(239,68,68,0.85)',
-                    color: '#fff',
-                    font: { size: 10, weight: 'bold' as const },
-                    padding: 4,
-                    cornerRadius: 4,
-                },
-            };
-        });
-        return ann;
-    }, [disruptorEvents]);
 
     const mainDatasets = [
         {
@@ -174,63 +150,14 @@ export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clea
         },
     };
 
-    const clearingDatasets = [
-        {
-            label: 'Actual deal price',
-            data: clearingData,
-            borderColor: '#4da6ff',
-            backgroundColor: '#4da6ff',
-            pointRadius: clearingData.length <= 30 ? 3 : 2,
-            pointBackgroundColor: '#4da6ff',
-            showLine: true,
-            tension: 0.2,
-            borderWidth: 2,
-        },
-    ];
 
-    const clearingOptions: ChartOptions<'line'> = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            annotation: {
-                annotations: clearingAnnotations,
-            },
-            tooltip: {
-                callbacks: {
-                    title: (items: any) => `Deal #${items[0]?.parsed?.x}`,
-                    label: (item: any) => `Price ₱${item.parsed.y}`,
-                },
-            },
-        },
-        scales: {
-            x: {
-                type: 'linear',
-                title: { display: true, text: 'Deal # (order of sale)', color: '#9ca3af', font: { size: 10 } },
-                ticks: { color: '#6b7280', stepSize: 1 },
-                grid: { color: '#2a2d35' },
-                min: 0,
-            },
-            y: {
-                title: { display: true, text: 'Price (₱)', color: '#9ca3af', font: { size: 10 } },
-                ticks: { color: '#6b7280' },
-                grid: { color: '#2a2d35' },
-                min: 0,
-            },
-        },
-    };
 
     return (
         <div className="flex flex-col gap-2">
             <div className="relative" style={{ height: '260px' }}>
                 <Line ref={ref} data={{ datasets: mainDatasets }} options={mainOptions} plugins={[annotationPlugin]} />
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-muted font-semibold">
-                Price of each sale — red lines mark shocks
-            </div>
-            <div className="relative" style={{ height: '140px' }}>
-                <Line data={{ datasets: clearingDatasets }} options={clearingOptions} plugins={[annotationPlugin]} />
-            </div>
+            <DealPriceChart clearingData={clearingData} disruptorEvents={disruptorEvents} onDealClick={onDealClick} />
         </div>
     );
 });
