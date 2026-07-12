@@ -42,7 +42,7 @@ There are also a few things you can switch on to mess with the market and watch 
 
 * **Demand Shock** — a bunch of new buyers suddenly show up, so demand jumps and more dealing happens.
 
-These are just easy ways to poke at the market and see how buyers and sellers react.
+> These disruptions allow us to observe how policies and external factors can influence market efficiency and participant behavior.
 
 ## Installation
 
@@ -70,7 +70,6 @@ npm run dev
 * Price negotiation (bargaining)
 * Adaptive seller pricing behavior
 * Market disruption simulations
-* Set up your own market — pick how many buyers and sellers, what they can afford, what things cost, how much stock, and how tough buyers bargain
 * Educational visualization of economic concepts
 
 ## TODO
