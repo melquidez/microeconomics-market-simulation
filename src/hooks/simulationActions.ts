@@ -125,6 +125,8 @@ export const resetSimulationAction = (
         activeBuyers: 0,
         activeSellers: 0,
         efficiency: '-',
+        allocativeEfficiency: '-',
+        deadweightLoss: '₱0',
     });
 
 

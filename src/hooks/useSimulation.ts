@@ -18,6 +18,8 @@ import {
     isSellerActive as helperIsSellerActive,
     findTargetForBuyer as helperFindTargetForBuyer,
     isSuccessfulOutcome,
+    computeMaxSurplus,
+    computeRealizedSurplus,
     createSeller,
     createBuyer,
     buildTransactionEntry,
@@ -59,6 +61,8 @@ export const useSimulation = (initialConfig: Config) => {
         activeBuyers: 0,
         activeSellers: 0,
         efficiency: '--',
+        allocativeEfficiency: '--',
+        deadweightLoss: '₱0',
     });
     // Bumped whenever the static scene changes while the simulation is NOT
     // running (spawn / reset / disruptor / demand shock) so Canvas repaints once.
@@ -180,6 +184,10 @@ export const useSimulation = (initialConfig: Config) => {
 
         const avg = tlogs.length ? (tlogs.reduce((s, l) => s + l.clearingPrice, 0) / tlogs.length).toFixed(1) : '0';
 
+        // Welfare metrics (same effective-cost basis as the equilibrium chart).
+        const maxSurplus = computeMaxSurplus(sellersRef.current, buyersRef.current, getEffectiveCost);
+        const realizedSurplus = computeRealizedSurplus(transactionLog);
+
         const next: Stats = {
             transactions: trans,
             noDeals,
@@ -187,6 +195,12 @@ export const useSimulation = (initialConfig: Config) => {
             activeBuyers: buyersRef.current.filter((b) => b.status === 'searching').length,
             activeSellers: sellersRef.current.filter((s) => isSellerActive(s)).length,
             efficiency: buyersRef.current.length ? ((trans / buyersRef.current.length) * 100).toFixed(1) + '%' : '-',
+            allocativeEfficiency: maxSurplus <= 0
+                ? realizedSurplus > 0
+                    ? '100%'
+                    : '-'
+                : ((realizedSurplus / maxSurplus) * 100).toFixed(1) + '%',
+            deadweightLoss: '₱' + Math.max(0, maxSurplus - realizedSurplus).toFixed(0),
         };
 
         const prev = lastStatsRef.current;
@@ -196,13 +210,15 @@ export const useSimulation = (initialConfig: Config) => {
             prev.avgPrice === next.avgPrice &&
             prev.activeBuyers === next.activeBuyers &&
             prev.activeSellers === next.activeSellers &&
-            prev.efficiency === next.efficiency
+            prev.efficiency === next.efficiency &&
+            prev.allocativeEfficiency === next.allocativeEfficiency &&
+            prev.deadweightLoss === next.deadweightLoss
         ) {
             return;
         }
         lastStatsRef.current = next;
         setStats(next);
-    }, [transactionLog, isSellerActive]);
+    }, [transactionLog, isSellerActive, getEffectiveCost]);
 
 
 

@@ -42,10 +42,11 @@ function App() {
     }, [sim.status]);
 
     // Compute supply/demand data for chart
-    const { supplyData, demandData, clearingData, equilibrium } = useMemo(() => {
+    const { supplyData, demandData, clearingData, equilibrium, disruptorAnnotations } = useMemo(() => {
         const sellers = sim.sellersRef.current;
         const buyers = sim.buyersRef.current;
         const getEffectiveCost = sim.getEffectiveCost; // now a function (seller) => number
+        const disruptors = sim.disruptors;
 
         const supplyPoints: { x: number; y: number }[] = [];
         const nonExited = sellers.filter((s) => s.status !== 'exited');
@@ -123,8 +124,128 @@ function App() {
             }
         }
 
-        return { supplyData: supplyPoints, demandData: demandPoints, clearingData: clearing, equilibrium };
-    }, [sim.sellersRef.current, sim.buyersRef.current, sim.equilibriumData, sim.getEffectiveCost]);
+        // Disruptor overlays: ceiling/floor lines plus shortage/surplus shading
+        // and the tax wedge. These make the disequilibrium caused by a binding
+        // price control visible instead of implying the market still clears.
+        const disruptorAnnotations: Record<string, any> = {};
+        const qSupplyAt = (p: number) =>
+            nonExited.filter((s) => getEffectiveCost(s) <= p).reduce((sum, s) => sum + s.originalStock, 0);
+        const qDemandAt = (p: number) => buyers.filter((b) => b.maxBudget >= p).length;
+        const band = (p: number) => ({ yMin: Math.max(0, p - 12), yMax: p + 12 });
+        if (disruptors.priceCeiling) {
+            const pc = disruptors.priceCeiling.amount;
+            disruptorAnnotations['ceiling'] = {
+                type: 'line',
+                scaleID: 'y',
+                value: pc,
+                borderColor: 'rgba(239,68,68,0.95)',
+                borderWidth: 2,
+                borderDash: [4, 3],
+                label: {
+                    content: `Price Ceiling ₱${pc}`,
+                    enabled: true,
+                    position: 'start',
+                    backgroundColor: 'rgba(239,68,68,0.95)',
+                    color: '#fff',
+                    font: { size: 10, weight: 'bold' as const },
+                    padding: 3,
+                    cornerRadius: 4,
+                },
+            };
+            if (equilibrium && pc < equilibrium.pe) {
+                const qs = qSupplyAt(pc);
+                const qd = qDemandAt(pc);
+                if (qd > qs) {
+                    disruptorAnnotations['shortage'] = {
+                        type: 'box',
+                        xMin: qs,
+                        xMax: qd,
+                        ...band(pc),
+                        backgroundColor: 'rgba(239,68,68,0.18)',
+                        borderWidth: 0,
+                        label: {
+                            content: `Shortage ${qd - qs}`,
+                            enabled: true,
+                            position: 'center',
+                            color: '#fecaca',
+                            font: { size: 10, weight: 'bold' as const },
+                        },
+                    };
+                }
+            }
+        }
+        if (disruptors.priceFloor) {
+            const pf = disruptors.priceFloor.amount;
+            disruptorAnnotations['floor'] = {
+                type: 'line',
+                scaleID: 'y',
+                value: pf,
+                borderColor: 'rgba(59,130,246,0.95)',
+                borderWidth: 2,
+                borderDash: [4, 3],
+                label: {
+                    content: `Price Floor ₱${pf}`,
+                    enabled: true,
+                    position: 'start',
+                    backgroundColor: 'rgba(59,130,246,0.95)',
+                    color: '#fff',
+                    font: { size: 10, weight: 'bold' as const },
+                    padding: 3,
+                    cornerRadius: 4,
+                },
+            };
+            if (equilibrium && pf > equilibrium.pe) {
+                const qs = qSupplyAt(pf);
+                const qd = qDemandAt(pf);
+                if (qs > qd) {
+                    disruptorAnnotations['surplus'] = {
+                        type: 'box',
+                        xMin: qd,
+                        xMax: qs,
+                        ...band(pf),
+                        backgroundColor: 'rgba(59,130,246,0.18)',
+                        borderWidth: 0,
+                        label: {
+                            content: `Surplus ${qs - qd}`,
+                            enabled: true,
+                            position: 'center',
+                            color: '#bfdbfe',
+                            font: { size: 10, weight: 'bold' as const },
+                        },
+                    };
+                }
+            }
+        }
+        if (disruptors.tax && equilibrium) {
+            const t = disruptors.tax.amount;
+            disruptorAnnotations['taxWedge'] = {
+                type: 'box',
+                xMin: Math.max(0, equilibrium.qe - 3),
+                xMax: equilibrium.qe + 3,
+                yMin: equilibrium.pe - t,
+                yMax: equilibrium.pe,
+                backgroundColor: 'rgba(250,204,21,0.18)',
+                borderWidth: 0,
+                label: {
+                    content: `Tax ₱${t}`,
+                    enabled: true,
+                    position: 'center',
+                    color: '#fde68a',
+                    font: { size: 10, weight: 'bold' as const },
+                },
+            };
+            disruptorAnnotations['sellerReceive'] = {
+                type: 'line',
+                scaleID: 'y',
+                value: equilibrium.pe - t,
+                borderColor: 'rgba(34,197,94,0.9)',
+                borderWidth: 1.5,
+                borderDash: [3, 3],
+            };
+        }
+
+        return { supplyData: supplyPoints, demandData: demandPoints, clearingData: clearing, equilibrium, disruptorAnnotations };
+    }, [sim.sellersRef.current, sim.buyersRef.current, sim.equilibriumData, sim.getEffectiveCost, sim.disruptors]);
 
     // Chart updates reactively through <Chart> props (datasets + annotations).
 
@@ -222,6 +343,7 @@ function App() {
                         clearingData={clearingData}
                         disruptorEvents={sim.disruptorEvents}
                         equilibrium={equilibrium}
+                        disruptorAnnotations={disruptorAnnotations}
                         onDealClick={setSelectedTransaction}
                     />
                 </div>
@@ -235,6 +357,8 @@ function App() {
                 onClose={() => setShowSummary(false)}
                 transactionLog={sim.transactionLog}
                 totalBuyers={sim.buyersRef.current.length}
+                allocativeEfficiency={sim.stats.allocativeEfficiency}
+                deadweightLoss={sim.stats.deadweightLoss}
             />
         </div>
     );

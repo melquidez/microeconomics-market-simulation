@@ -8,6 +8,8 @@ export const Stats: React.FC<StatsType> = ({
     activeBuyers,
     activeSellers,
     efficiency,
+    allocativeEfficiency,
+    deadweightLoss,
 }) => {
     return (
         <div className="panel bg-panel border border-border rounded-lg p-3">
@@ -31,7 +33,13 @@ export const Stats: React.FC<StatsType> = ({
                     Active Sellers: <span className="text-seller font-bold">{activeSellers}</span>
                 </div>
                 <div className="stat-badge bg-panel rounded-md px-3 py-1">
-                    Efficiency: <span className="font-bold">{efficiency}</span>
+                    Deal Rate: <span className="font-bold">{efficiency}</span>
+                </div>
+                <div className="stat-badge bg-panel rounded-md px-3 py-1">
+                    Allocative Eff: <span className="text-success font-bold">{allocativeEfficiency}</span>
+                </div>
+                <div className="stat-badge bg-panel rounded-md px-3 py-1">
+                    Deadweight Loss: <span className="text-danger font-bold">{deadweightLoss}</span>
                 </div>
             </div>
         </div>

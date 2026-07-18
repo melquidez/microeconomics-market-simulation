@@ -13,7 +13,7 @@ export interface Seller {
     originalAsk: number;
     stock: number;
     originalStock: number;
-    status: 'available' | 'soldOut' | 'exited';
+    status: 'available' | 'soldOut' | 'exited' | 'capped';
     radius: number;
     glowTimer: number;
 
@@ -87,5 +87,7 @@ export interface Stats {
     avgPrice: string;
     activeBuyers: number;
     activeSellers: number;
-    efficiency: string;
+    efficiency: string; // deal-completion rate (transactions / buyers)
+    allocativeEfficiency: string; // realized total surplus / maximum possible total surplus
+    deadweightLoss: string; // maximum possible surplus - realized surplus
 }

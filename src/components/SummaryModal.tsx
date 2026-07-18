@@ -9,6 +9,8 @@ interface SummaryModalProps {
   onClose: () => void;
   transactionLog: TransactionLogEntry[];
   totalBuyers: number;
+  allocativeEfficiency: string;
+  deadweightLoss: string;
 }
 
 export const SummaryModal: React.FC<SummaryModalProps> = ({
@@ -16,6 +18,8 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
   onClose,
   transactionLog,
   totalBuyers,
+  allocativeEfficiency,
+  deadweightLoss,
 }) => {
   if (!isOpen) return null;
 
@@ -76,9 +80,17 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
             <FontAwesomeIcon icon={faBuilding} className='text-muted mr-1' />
             Producer Surplus: <b>₱{totalProducerSurplus.toFixed(0)}</b>
           </div>
+          <div className="stat-badge bg-panel rounded-md px-3 py-1">
+            <FontAwesomeIcon icon={faChartArea} className="text-green-500 mr-1" />
+            Allocative Eff: <b>{allocativeEfficiency}</b>
+          </div>
+          <div className="stat-badge bg-panel rounded-md px-3 py-1">
+            <FontAwesomeIcon icon={faChartBar} className="text-red-500 mr-1" />
+            Deadweight Loss: <b>{deadweightLoss}</b>
+          </div>
           <div className="stat-badge bg-panel rounded-md px-3 py-1 col-span-2">
             <FontAwesomeIcon icon={faChartArea} className="text-green-500 mr-1" />
-            Efficiency: <b>{efficiency}%</b> (transactions / total buyers)
+            Deal Rate: <b>{efficiency}%</b> (transactions / total buyers)
           </div>
         </div>
         <button

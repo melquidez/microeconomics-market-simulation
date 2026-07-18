@@ -45,9 +45,16 @@ export const drawMarket = (ctx: CanvasRenderingContext2D, opts: DrawOptions) => 
             ctx.fillStyle = `rgba(34,197,94,${(s.glowTimer / 0.6) * 0.5})`;
             ctx.fill();
         }
+        const isCapped = s.status === 'capped';
+        if (isCapped) ctx.globalAlpha = 0.45;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-        ctx.fillStyle = s.status === 'soldOut' || s.status === 'exited' ? '#555' : '#2563eb';
+        ctx.fillStyle =
+            s.status === 'soldOut' || s.status === 'exited'
+                ? '#555'
+                : isCapped
+                    ? '#3f4a5a'
+                    : '#2563eb';
         ctx.strokeStyle = s.status === 'soldOut' || s.status === 'exited' ? '#666' : '#60a5fa';
         ctx.lineWidth = 2.5;
         ctx.fill();
@@ -75,12 +82,17 @@ export const drawMarket = (ctx: CanvasRenderingContext2D, opts: DrawOptions) => 
             ctx.fillStyle = '#ef4444';
             ctx.font = 'bold 14px Inter';
             ctx.fillText('✕', s.x, s.y + 5);
+        } else if (s.status === 'capped') {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = 'bold 9px Inter';
+            ctx.fillText('CAP', s.x, s.y - s.radius - 20);
         }
         if (s.status === 'soldOut') {
             ctx.fillStyle = '#9ca3af';
             ctx.font = 'bold 10px Inter';
             ctx.fillText('SOLD', s.x, s.y + s.radius + 14);
         }
+        ctx.globalAlpha = 1;
     });
 
     // Buyers
@@ -143,6 +155,10 @@ export const drawMarket = (ctx: CanvasRenderingContext2D, opts: DrawOptions) => 
             ctx.font = 'bold 14px Inter';
             ctx.fillStyle = `rgba(239,68,68,${alpha})`;
             ctx.fillText('EXIT', a.x, a.y + yOff);
+        } else if (a.type === 'cap') {
+            ctx.font = 'bold 12px Inter';
+            ctx.fillStyle = `rgba(156,163,175,${alpha})`;
+            ctx.fillText('CAP', a.x, a.y + yOff);
         }
     });
 

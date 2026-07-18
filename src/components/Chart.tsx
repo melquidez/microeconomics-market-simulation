@@ -34,10 +34,11 @@ interface ChartProps {
     clearingData: { x: number; y: number }[];
     disruptorEvents: DisruptorEvent[];
     equilibrium: { qe: number; pe: number } | null;
+    disruptorAnnotations?: Record<string, any>;
     onDealClick?: (transactionNum: number) => void;
 }
 
-export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, onDealClick }, ref) => {
+export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, disruptorAnnotations, onDealClick }, ref) => {
     // Top chart: equilibrium cross only (quantity space — no time events here).
     const mainAnnotations = useMemo(() => {
         const ann: Record<string, any> = {};
@@ -130,7 +131,7 @@ export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clea
                 labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 14 },
             },
             annotation: {
-                annotations: mainAnnotations,
+                annotations: { ...mainAnnotations, ...(disruptorAnnotations ?? {}) },
             },
         },
         scales: {

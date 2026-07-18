@@ -28,7 +28,7 @@ export const getEffectiveAsk = (seller: Seller, disruptors: DisruptorState): num
 
 // Check if seller is available to transact (not sold out, has stock, cost viability)
 export const isSellerActive = (seller: Seller, disruptors: DisruptorState): boolean => {
-    if (seller.status === 'soldOut' || seller.status === 'exited') return false;
+    if (seller.status === 'soldOut' || seller.status === 'exited' || seller.status === 'capped') return false;
     if (disruptors.priceCeiling && disruptors.priceCeiling.amount < getEffectiveCost(seller, disruptors)) return false;
     return seller.stock > 0;
 };
@@ -80,6 +80,43 @@ export const isBargainAccepted = (proposedPrice: number, cost: number): boolean 
 // Check if transaction was successful (distinguishes real deals from rejections)
 export const isSuccessfulOutcome = (outcome: string): boolean => outcome.startsWith('Transacted');
 
+// Maximum possible total surplus: best assignment of buyer WTP to seller units
+// (greedy - highest-WTP buyers matched to lowest-cost units). Used for the
+// allocative-efficiency and deadweight-loss metrics.
+export const computeMaxSurplus = (
+    sellers: Seller[],
+    buyers: Buyer[],
+    getEffectiveCost: (seller: Seller) => number
+): number => {
+    const unitCosts: number[] = [];
+    for (const s of sellers) {
+        for (let i = 0; i < s.originalStock; i++) unitCosts.push(getEffectiveCost(s));
+    }
+    unitCosts.sort((a, b) => a - b);
+    const budgets = buyers.map((b) => b.maxBudget).sort((a, b) => b - a);
+    let max = 0;
+    let ci = 0;
+    for (const b of budgets) {
+        while (ci < unitCosts.length && unitCosts[ci] > b) ci++;
+        if (ci < unitCosts.length) {
+            max += b - unitCosts[ci];
+            ci++;
+        }
+    }
+    return max;
+};
+
+// Realized total surplus from completed deals: sum of (buyer WTP - seller cost).
+// Uses the same effective-cost basis as computeMaxSurplus so the comparison is
+// consistent (tax/subsidy are transfers and are not double-counted as loss).
+export const computeRealizedSurplus = (log: TransactionLogEntry[]): number => {
+    let realized = 0;
+    for (const l of log) {
+        if (isSuccessfulOutcome(l.outcome)) realized += l.buyerBudget - l.sellerCost;
+    }
+    return realized;
+};
+
 
 // Remove expired animations based on elapsed time
 export const advanceAnimations = (animations: Animation[], dt: number): void => {
@@ -118,21 +155,30 @@ export const applyDisruptorEffects = (
     if (disruptors.priceCeiling) {
         const ceil = disruptors.priceCeiling.amount;
         for (const s of sellers) {
-            if (s.status === 'available' && ceil < getEffectiveCost(s) && s.stock > 0) {
-                s.status = 'exited';
-                animations.push({
-                    x: s.x,
-                    y: s.y - 20,
-                    type: 'exit',
-                    timer: 1.5,
-                    maxTimer: 1.5,
-                });
+            if (s.stock <= 0) continue;
+            if (ceil < getEffectiveCost(s)) {
+                // Binding ceiling: this seller cannot profitably sell at the
+                // capped price. They stay in the market but supply zero at the
+                // ceiling — this is a SHORTAGE (excess demand), not an exit.
+                if (s.status === 'available') {
+                    s.status = 'capped';
+                    animations.push({
+                        x: s.x,
+                        y: s.y - 20,
+                        type: 'cap',
+                        timer: 1.5,
+                        maxTimer: 1.5,
+                    });
+                }
+            } else if (s.status === 'capped') {
+                // Ceiling raised above this seller's cost -> can sell again.
+                s.status = 'available';
             }
         }
     } else {
         // Re-activate sellers when price ceiling is removed
         for (const s of sellers) {
-            if (s.status === 'exited' && s.stock > 0) s.status = 'available';
+            if ((s.status === 'exited' || s.status === 'capped') && s.stock > 0) s.status = 'available';
         }
     }
 
@@ -193,18 +239,19 @@ export const applyCeilingExitEffects = (
     disruptors: DisruptorState,
     getEffectiveCost: (seller: Seller) => number
 ): void => {
-    if (!disruptors.priceCeiling) return;
+    if (!disruptors.priceCeiling) {
+        for (const s of sellers) {
+            if (s.status === 'capped' && s.stock > 0) s.status = 'available';
+        }
+        return;
+    }
     const ceil = disruptors.priceCeiling.amount;
     for (const s of sellers) {
-        if (s.status === 'available' && ceil < getEffectiveCost(s) && s.stock > 0) {
-            s.status = 'exited';
-            animations.push({
-                x: s.x,
-                y: s.y - 20,
-                type: 'exit',
-                timer: 1.5,
-                maxTimer: 1.5,
-            });
+        if (s.stock <= 0) continue;
+        if (ceil < getEffectiveCost(s)) {
+            if (s.status === 'available') s.status = 'capped';
+        } else if (s.status === 'capped') {
+            s.status = 'available';
         }
     }
 };
