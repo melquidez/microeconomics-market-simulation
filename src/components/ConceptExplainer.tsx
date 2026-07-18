@@ -61,7 +61,7 @@ export const TOPICS: Record<string, HelpTopic> = {
   },
   allocativeEff: {
     title: 'Allocative Efficiency',
-    body: 'How much of the maximum possible total surplus the market actually captured. It equals realized surplus ÷ the most surplus physically possible (best matching of high-value buyers to low-cost sellers). 100% means every mutually-beneficial trade happened.',
+    body: 'How much of the maximum possible total surplus the market actually captured. It equals realized surplus ÷ the most surplus physically possible (best matching of high-value buyers to low-cost sellers). 100% means every mutually-beneficial trade happened. Taxes and subsidies are transfers, so they are netted out here — this metric reflects real resource allocation, not government cash.',
     example: (c) =>
       `You created ₱${c.realizedSurplus.toFixed(0)} of surplus out of a possible ₱${c.maxSurplus.toFixed(
         0
@@ -69,7 +69,7 @@ export const TOPICS: Record<string, HelpTopic> = {
   },
   deadweightLoss: {
     title: 'Deadweight Loss',
-    body: 'Value that was destroyed because beneficial trades never happened. It equals the maximum possible surplus minus the surplus actually created. Taxes, price ceilings/floors, and no-deals all create it.',
+    body: 'Value that was destroyed because beneficial trades never happened (or because trades happened that shouldn\'t have). It equals the maximum possible surplus minus the surplus actually created. Taxes (fewer trades happen), subsidies (trades where the buyer values the good less than it costs to make), price ceilings/floors, and no-deals all create it.',
     example: (c) =>
       `The market could have produced ₱${c.maxSurplus.toFixed(0)} of total surplus, but only produced ₱${c.realizedSurplus.toFixed(
         0

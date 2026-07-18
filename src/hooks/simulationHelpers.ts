@@ -18,9 +18,17 @@ export const getEffectiveCost = (seller: Seller, disruptors: DisruptorState): nu
     return Math.max(0, cost);
 };
 
-// Calculate seller's effective asking price after applying price ceiling/floor
+// Calculate the price the BUYER actually pays after applying disruptions.
+// A tax is passed through to the consumer (the seller's effective sticker
+// rises by the tax); a subsidy lowers the consumer price. This keeps tax/
+// subsidy incidence consistent with the equilibrium chart's wedges, and it
+// guarantees a seller can never trade at a loss: effectiveAsk - effectiveCost
+// = askingPrice - costOfGoods >= 0 always holds (askingPrice >= cost + 1).
+// Price ceiling/floor then clamp the resulting consumer price.
 export const getEffectiveAsk = (seller: Seller, disruptors: DisruptorState): number => {
     let ask = seller.askingPrice;
+    if (disruptors.tax) ask += disruptors.tax.amount;
+    if (disruptors.subsidy) ask -= disruptors.subsidy.amount;
     if (disruptors.priceCeiling && ask > disruptors.priceCeiling.amount) ask = disruptors.priceCeiling.amount;
     if (disruptors.priceFloor && ask < disruptors.priceFloor.amount) ask = disruptors.priceFloor.amount;
     return ask;
@@ -263,8 +271,7 @@ export const applyCeilingExitEffects = (
 const applySellerDynamicPricing = (
     target: Seller,
     dynamicPricing: boolean,
-    disruptors: DisruptorState,
-    getEffectiveCost: (seller: Seller) => number
+    disruptors: DisruptorState
 ): void => {
     if (!dynamicPricing) return;
     let newAsk = Math.ceil(target.askingPrice * 1.05);
@@ -318,14 +325,22 @@ export const settleBuyerAtSeller = (
         origAsk?: number,
         proposedPrice?: number
     ) => void,
-    setEquilibriumData: Dispatch<SetStateAction<{ transactionNum: number; clearingPrice: number }[]>>,
-    round: number
+    setEquilibriumData: Dispatch<SetStateAction<{ transactionNum: number; clearingPrice: number }[]>>
 ): void => {
     const origAsk = target.askingPrice;
     const effectiveAsk = getEffectiveAsk(target);
 
     // Seller no longer active - reject and move on
     if (!isSellerActive(target)) {
+        buyer.visitedSellers.add(target.id);
+        buyer.targetSeller = null;
+        return;
+    }
+
+    // Seller will not sell below their effective cost (cost + tax - subsidy).
+    // Under pass-through pricing this is always satisfied, but guard it so a
+    // seller can never record a negative-profit sale.
+    if (effectiveAsk < getEffectiveCost(target)) {
         buyer.visitedSellers.add(target.id);
         buyer.targetSeller = null;
         return;
@@ -352,12 +367,12 @@ export const settleBuyerAtSeller = (
             target,
             'Transacted',
             effectiveAsk,
-            getEffectiveCost(target),
+            target.costOfGoods,
             profit,
             surplus,
             origAsk
         );
-        applySellerDynamicPricing(target, dynamicPricing, disruptors, getEffectiveCost);
+        applySellerDynamicPricing(target, dynamicPricing, disruptors);
         setEquilibriumData((prev) => [
             ...prev,
             { transactionNum: prev.length + 1, clearingPrice: effectiveAsk },
@@ -395,13 +410,13 @@ export const settleBuyerAtSeller = (
                 target,
                 'Transacted (Bargain)',
                 proposedPrice,
-                cost,
+                target.costOfGoods,
                 profit,
                 surplus,
                 origAsk,
                 proposedPrice
             );
-            applySellerDynamicPricing(target, dynamicPricing, disruptors, getEffectiveCost);
+            applySellerDynamicPricing(target, dynamicPricing, disruptors);
             setEquilibriumData((prev) => [
                 ...prev,
                 { transactionNum: prev.length + 1, clearingPrice: proposedPrice },
@@ -465,8 +480,7 @@ export const updateSimulationFrame = (
         origAsk?: number,
         proposedPrice?: number
     ) => void,
-    setEquilibriumData: Dispatch<SetStateAction<{ transactionNum: number; clearingPrice: number }[]>>,
-    round: number
+    setEquilibriumData: Dispatch<SetStateAction<{ transactionNum: number; clearingPrice: number }[]>>
 ): void => {
     const effectiveSpeed = 90 * speedMultiplier * dt;
 
@@ -520,8 +534,7 @@ export const updateSimulationFrame = (
                 getEffectiveCost,
                 isSellerActive,
                 logTransaction,
-                setEquilibriumData,
-                round
+                setEquilibriumData
             );
         } else {
 

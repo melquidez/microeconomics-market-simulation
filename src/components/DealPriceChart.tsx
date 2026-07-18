@@ -11,9 +11,13 @@ import {
     Legend,
     Filler,
     ChartOptions,
+    ChartEvent,
+    ActiveElement,
+    TooltipItem,
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { DisruptorEvent } from '../types';
+import type { AnnotationOptions } from 'chartjs-plugin-annotation';
+import { DisruptorEvent, ChartAnnotations } from '../types';
 
 ChartJS.register(
     CategoryScale,
@@ -37,7 +41,7 @@ export const DealPriceChart = ({ clearingData, disruptorEvents, onDealClick }: D
     // Disruptor shocks are time events, so they belong on the "deal order"
     // axis (x = transaction number), not the quantity axis.
     const clearingAnnotations = useMemo(() => {
-        const ann: Record<string, any> = {};
+        const ann: ChartAnnotations = {};
         disruptorEvents.forEach((evt, i) => {
             ann[`d${i}`] = {
                 type: 'line',
@@ -80,26 +84,26 @@ export const DealPriceChart = ({ clearingData, disruptorEvents, onDealClick }: D
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'nearest', intersect: false },
-        onClick: (_event: any, elements: any) => {
+        onClick: (_event: ChartEvent, elements: ActiveElement[]) => {
             if (elements.length > 0) {
                 const idx = elements[0].index;
                 const point = clearingData[idx];
                 if (point && onDealClick) onDealClick(point.x);
             }
         },
-        onHover: (event: any, elements: any) => {
-            const el = event?.native?.target as HTMLElement | null;
+        onHover: (event: ChartEvent, elements: ActiveElement[]) => {
+            const el = event.native?.target as HTMLElement | null;
             if (el) el.style.cursor = elements.length ? 'pointer' : 'default';
         },
         plugins: {
             legend: { display: false },
             annotation: {
-                annotations: clearingAnnotations,
+                annotations: clearingAnnotations as unknown as Record<string, AnnotationOptions>,
             },
             tooltip: {
                 callbacks: {
-                    title: (items: any) => `Deal #${items[0]?.parsed?.x}`,
-                    label: (item: any) => `Price ₱${item.parsed.y}`,
+                    title: (items: TooltipItem<'line'>[]) => `Deal #${items[0]?.parsed?.x}`,
+                    label: (item: TooltipItem<'line'>) => `Price ₱${item.parsed.y}`,
                 },
             },
         },

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { ChartAnnotations } from '../types';
 import { useSimulation } from '../hooks/useSimulation';
 import { Canvas } from '../components/Canvas';
 import { Controls } from '../components/Controls';
@@ -29,17 +30,17 @@ function App() {
     };
 
     const sim = useSimulation(initialConfig);
-    const chartRef = useRef<any>(null);
 
-    const [showSummary, setShowSummary] = useState(false);
+    const [summaryDismissed, setSummaryDismissed] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<number | null>(null);
 
+    const showSummary = sim.status === 'roundEnd' && !summaryDismissed;
 
-    useEffect(() => {
-        if (sim.status === 'roundEnd') {
-            setShowSummary(true);
-        }
-    }, [sim.status]);
+    // Re-open the round summary at the next round end; the flag is cleared
+    // whenever a new round begins.
+    const handleStart = () => { setSummaryDismissed(false); sim.startRound(); };
+    const handleNext = () => { setSummaryDismissed(false); sim.nextRound(); };
+    const handleReset = () => { setSummaryDismissed(false); sim.resetSimulation(); };
 
     // Compute supply/demand data for chart
     const { supplyData, demandData, clearingData, equilibrium, disruptorAnnotations } = useMemo(() => {
@@ -127,7 +128,7 @@ function App() {
         // Disruptor overlays: ceiling/floor lines plus shortage/surplus shading
         // and the tax wedge. These make the disequilibrium caused by a binding
         // price control visible instead of implying the market still clears.
-        const disruptorAnnotations: Record<string, any> = {};
+        const disruptorAnnotations: ChartAnnotations = {};
         const qSupplyAt = (p: number) =>
             nonExited.filter((s) => getEffectiveCost(s) <= p).reduce((sum, s) => sum + s.originalStock, 0);
         const qDemandAt = (p: number) => buyers.filter((b) => b.maxBudget >= p).length;
@@ -286,7 +287,11 @@ function App() {
         }
 
         return { supplyData: supplyPoints, demandData: demandPoints, clearingData: clearing, equilibrium, disruptorAnnotations };
-    }, [sim.sellersRef.current, sim.buyersRef.current, sim.equilibriumData, sim.getEffectiveCost, sim.disruptors]);
+    // Agent refs are read for their current values; supply/demand only change
+    // on spawn (new array ref), a disruptor toggle, or a demand shock
+    // (drawNonce) — all captured in the deps below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sim.sellersRef.current, sim.buyersRef.current, sim.equilibriumData, sim.getEffectiveCost, sim.disruptors, sim.drawNonce]);
 
     // Chart updates reactively through <Chart> props (datasets + annotations).
 
@@ -344,10 +349,10 @@ function App() {
                         speed={sim.speed}
                         dynamicPricing={sim.dynamicPricing}
                         bargaining={sim.bargaining}
-                        onStart={sim.startRound}
+                        onStart={handleStart}
                         onPause={sim.togglePause}
-                        onReset={sim.resetSimulation}
-                        onNext={sim.nextRound}
+                        onReset={handleReset}
+                        onNext={handleNext}
                         onSpeedChange={sim.setSpeed}
                         onDynamicPricingToggle={sim.setDynamicPricing}
                         onBargainingToggle={sim.setBargaining}
@@ -378,7 +383,6 @@ function App() {
                         Live Equilibrium Curve
                     </div>
                     <Chart
-                        ref={chartRef}
                         supplyData={supplyData}
                         demandData={demandData}
                         clearingData={clearingData}
@@ -395,7 +399,7 @@ function App() {
 
             <SummaryModal
                 isOpen={showSummary}
-                onClose={() => setShowSummary(false)}
+                onClose={() => setSummaryDismissed(true)}
                 transactionLog={sim.transactionLog}
                 totalBuyers={sim.buyersRef.current.length}
                 allocativeEfficiency={sim.stats.allocativeEfficiency}

@@ -106,7 +106,7 @@ export const useSimulation = (initialConfig: Config) => {
 
     // Animation loop tracking
     const animationFrameRef = useRef<number | null>(null);
-    const lastTimeRef = useRef<number>(performance.now());
+    const lastTimeRef = useRef<number>(0);
     // Keeps Demand Shock buyer IDs unique across every shock (never resets).
     const shockIdRef = useRef<number>(0);
     // Mirror of `status` so the loop always reads the latest value without
@@ -184,8 +184,12 @@ export const useSimulation = (initialConfig: Config) => {
 
         const avg = tlogs.length ? (tlogs.reduce((s, l) => s + l.clearingPrice, 0) / tlogs.length).toFixed(1) : '0';
 
-        // Welfare metrics (same effective-cost basis as the equilibrium chart).
-        const maxSurplus = computeMaxSurplus(sellersRef.current, buyersRef.current, getEffectiveCost);
+        // Welfare metrics. Max/realized surplus use the seller's BASE cost so
+        // that taxes and subsidies (government transfers) are netted out of
+        // allocative efficiency and deadweight loss. The equilibrium chart
+        // still uses the effective cost (which includes tax/subsidy) for the
+        // supply curve and wedges.
+        const maxSurplus = computeMaxSurplus(sellersRef.current, buyersRef.current, (s) => s.costOfGoods);
         const realizedSurplus = computeRealizedSurplus(transactionLog);
 
         const next: Stats = {
@@ -218,7 +222,7 @@ export const useSimulation = (initialConfig: Config) => {
         }
         lastStatsRef.current = next;
         setStats(next);
-    }, [transactionLog, isSellerActive, getEffectiveCost]);
+    }, [transactionLog, isSellerActive]);
 
 
 
@@ -272,7 +276,7 @@ export const useSimulation = (initialConfig: Config) => {
             // without waiting for the running loop.
             bumpDraw();
         },
-        [applyDisruptorEffects, bumpDraw]
+        [applyDisruptorEffects, findTargetForBuyer, bumpDraw]
     );
 
     // Run one frame of simulation (move buyers, handle transactions, apply disruptors)
@@ -293,12 +297,11 @@ export const useSimulation = (initialConfig: Config) => {
                 buyersRef.current,
                 animationsRef.current,
                 logTransaction,
-                setEquilibriumData,
-                round
+                setEquilibriumData
             );
             updateStats();
         },
-        [dynamicPricing, bargaining, bargainPct, disruptors, getSpeedMultiplier, getEffectiveAsk, getEffectiveCost, isSellerActive, findTargetForBuyer, logTransaction, setEquilibriumData, round, updateStats]
+        [dynamicPricing, bargaining, bargainPct, disruptors, getSpeedMultiplier, getEffectiveAsk, getEffectiveCost, isSellerActive, findTargetForBuyer, logTransaction, setEquilibriumData, updateStats]
     );
 
     // Check if round should end (all buyers done or no active sellers)
@@ -428,7 +431,7 @@ export const useSimulation = (initialConfig: Config) => {
             addDisruptorMarker(`Demand Shock +${num}`);
             bumpDraw();
         },
-        [config, addDisruptorMarker, bumpDraw]
+        [config, addDisruptorMarker, findTargetForBuyer, bumpDraw]
     );
 
     // Side effects

@@ -1,4 +1,4 @@
-import React, { forwardRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -13,7 +13,8 @@ import {
     ChartOptions,
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { DisruptorEvent } from '../types';
+import type { AnnotationOptions } from 'chartjs-plugin-annotation';
+import { DisruptorEvent, ChartAnnotations } from '../types';
 import { DealPriceChart } from './DealPriceChart';
 
 ChartJS.register(
@@ -34,14 +35,14 @@ interface ChartProps {
     clearingData: { x: number; y: number }[];
     disruptorEvents: DisruptorEvent[];
     equilibrium: { qe: number; pe: number } | null;
-    disruptorAnnotations?: Record<string, any>;
+    disruptorAnnotations?: ChartAnnotations;
     onDealClick?: (transactionNum: number) => void;
 }
 
-export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, disruptorAnnotations, onDealClick }, ref) => {
+export const Chart = ({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, disruptorAnnotations, onDealClick }: ChartProps) => {
     // Top chart: equilibrium cross only (quantity space — no time events here).
     const mainAnnotations = useMemo(() => {
-        const ann: Record<string, any> = {};
+        const ann: ChartAnnotations = {};
         if (equilibrium) {
             // Vertical line at the equilibrium quantity.
             ann['eqV'] = {
@@ -131,7 +132,7 @@ export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clea
                 labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 14 },
             },
             annotation: {
-                annotations: { ...mainAnnotations, ...(disruptorAnnotations ?? {}) },
+                annotations: { ...mainAnnotations, ...(disruptorAnnotations ?? {}) } as unknown as Record<string, AnnotationOptions>,
             },
         },
         scales: {
@@ -156,11 +157,11 @@ export const Chart = forwardRef<any, ChartProps>(({ supplyData, demandData, clea
     return (
         <div className="flex flex-col gap-2">
             <div className="relative" style={{ height: '260px' }}>
-                <Line ref={ref} data={{ datasets: mainDatasets }} options={mainOptions} plugins={[annotationPlugin]} />
+                <Line data={{ datasets: mainDatasets }} options={mainOptions} plugins={[annotationPlugin]} />
             </div>
             <DealPriceChart clearingData={clearingData} disruptorEvents={disruptorEvents} onDealClick={onDealClick} />
         </div>
     );
-});
+};
 
 Chart.displayName = 'Chart';

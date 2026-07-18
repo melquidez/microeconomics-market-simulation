@@ -57,8 +57,15 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
   const efficiency =
     totalBuyers > 0 ? ((totalTrans / totalBuyers) * 100).toFixed(1) : '0.0';
 
-  // Real numbers for the worked examples.
-  const realizedSurplus = totalConsumerSurplus + totalProducerSurplus;
+  // Real numbers for the worked examples. Use the BASE-cost surplus basis
+  // (buyerBudget - sellerCost) so this matches the deadweight-loss / allocative
+  // efficiency figures, which also net out tax/subsidy transfers. The displayed
+  // Consumer/Producer Surplus badges below are the private surpluses (they still
+  // reflect tax/subsidy incidence on the buyer/seller).
+  const realizedSurplus = transactedLogs.reduce(
+    (s, l) => s + (l.buyerBudget - (typeof l.sellerCost === 'number' ? l.sellerCost : 0)),
+    0
+  );
   const dwlNum = parseInt((deadweightLoss || '').replace(/[^\d]/g, ''), 10) || 0;
   const maxSurplus = realizedSurplus + dwlNum;
   const ctx: HelpCtx = {

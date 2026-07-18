@@ -15,7 +15,7 @@ export interface DrawOptions {
 // function (not a React effect) so it can be called every animation frame
 // without triggering a React re-render of the whole app.
 export const drawMarket = (ctx: CanvasRenderingContext2D, opts: DrawOptions) => {
-    const { sellers, buyers, animations, round, status, isSellerActive, getEffectiveAsk } = opts;
+    const { sellers, buyers, animations, round, isSellerActive, getEffectiveAsk } = opts;
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
 

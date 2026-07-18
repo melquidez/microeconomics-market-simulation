@@ -91,3 +91,34 @@ export interface Stats {
     allocativeEfficiency: string; // realized total surplus / maximum possible total surplus
     deadweightLoss: string; // maximum possible surplus - realized surplus
 }
+
+// Loosely-typed shape for the chart.js annotation configs used in this app
+// (price-control lines, shortage/surplus bands, tax/subsidy wedges). Centralized
+// so the equilibrium chart and the deal-price chart share one non-`any` type.
+export interface ChartAnnotationLabel {
+    content: string;
+    enabled: boolean;
+    position: string;
+    backgroundColor?: string;
+    color?: string;
+    font?: { size: number; weight: 'bold' | 'normal' | number };
+    padding?: number;
+    cornerRadius?: number;
+}
+
+export interface ChartAnnotation {
+    type: 'line' | 'box';
+    scaleID?: string;
+    value?: number;
+    xMin?: number;
+    xMax?: number;
+    yMin?: number;
+    yMax?: number;
+    borderColor?: string;
+    borderWidth?: number;
+    borderDash?: number[];
+    backgroundColor?: string;
+    label?: ChartAnnotationLabel;
+}
+
+export type ChartAnnotations = Record<string, ChartAnnotation>;
