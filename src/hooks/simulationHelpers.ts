@@ -149,16 +149,19 @@ export const updateGlowAndFlashTimers = (sellers: Seller[], buyers: Buyer[], dt:
 
 
 
-// Handle price ceiling/floor effects
-// Exit sellers who can't profit, reassign buyers
-
-export const applyDisruptorEffects = (
+// Keep a seller's `capped` status in sync with the active price-ceiling
+// disruptor. This is the SINGLE source of truth for ceiling-driven capping:
+// it previously lived in two near-identical functions (applyDisruptorEffects
+// and applyCeilingExitEffects) that could drift apart. Calling it both when a
+// disruptor is toggled and every simulation frame guarantees the visual
+// "capped" state (and its CAP animation) can never fall out of sync with the
+// market. The transition guard (`s.status === 'available') ensures the CAP
+// animation fires exactly once per cap event, even though this runs per frame.
+export const syncSellerCapStatus = (
     sellers: Seller[],
-    buyers: Buyer[],
     animations: Animation[],
     disruptors: DisruptorState,
-    getEffectiveCost: (seller: Seller) => number,
-    findTargetForBuyer: (buyer: Buyer, sellers: Seller[]) => Seller | null
+    getEffectiveCost: (seller: Seller) => number
 ): void => {
     if (disruptors.priceCeiling) {
         const ceil = disruptors.priceCeiling.amount;
@@ -184,11 +187,28 @@ export const applyDisruptorEffects = (
             }
         }
     } else {
-        // Re-activate sellers when price ceiling is removed
+        // Re-activate sellers when the price ceiling is removed.
         for (const s of sellers) {
             if ((s.status === 'exited' || s.status === 'capped') && s.stock > 0) s.status = 'available';
         }
     }
+};
+
+// Apply disruptor effects to the market: sync seller capping with the active
+// price ceiling, then re-assign searching buyers to a valid target (in case a
+// seller they were heading to just got capped). Called on spawn and whenever
+// disruptors change — not every frame, because the per-frame loop already
+// re-finds a new target when a buyer's current one goes inactive.
+export const applyDisruptorEffects = (
+    sellers: Seller[],
+    buyers: Buyer[],
+    animations: Animation[],
+    disruptors: DisruptorState,
+    getEffectiveCost: (seller: Seller) => number,
+    findTargetForBuyer: (buyer: Buyer, sellers: Seller[]) => Seller | null
+): void => {
+    // Single source of truth for ceiling-driven capping (also reused per frame).
+    syncSellerCapStatus(sellers, animations, disruptors, getEffectiveCost);
 
     // Reassign buyers to new targets if needed
     for (const b of buyers) {
@@ -240,29 +260,8 @@ export const checkRoundEndState = (
     return false;
 };
 
-// Exit sellers who can't operate under price ceiling constraints
-export const applyCeilingExitEffects = (
-    sellers: Seller[],
-    animations: Animation[],
-    disruptors: DisruptorState,
-    getEffectiveCost: (seller: Seller) => number
-): void => {
-    if (!disruptors.priceCeiling) {
-        for (const s of sellers) {
-            if (s.status === 'capped' && s.stock > 0) s.status = 'available';
-        }
-        return;
-    }
-    const ceil = disruptors.priceCeiling.amount;
-    for (const s of sellers) {
-        if (s.stock <= 0) continue;
-        if (ceil < getEffectiveCost(s)) {
-            if (s.status === 'available') s.status = 'capped';
-        } else if (s.status === 'capped') {
-            s.status = 'available';
-        }
-    }
-};
+// (applyCeilingExitEffects was consolidated into syncSellerCapStatus above —
+// the per-frame loop now calls syncSellerCapStatus instead of a duplicate.)
 
 
 
@@ -552,8 +551,8 @@ export const updateSimulationFrame = (
         }
     }
 
-    // Apply price ceiling effects to seller base
-    applyCeilingExitEffects(sellers, animations, disruptors, getEffectiveCost);
+    // Sync seller capping with the active price ceiling (single source of truth).
+    syncSellerCapStatus(sellers, animations, disruptors, getEffectiveCost);
 };
 
 // Create a new seller with initial state
