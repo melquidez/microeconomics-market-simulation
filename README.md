@@ -44,6 +44,21 @@ There are also a few things you can switch on to mess with the market and watch 
 
 > These disruptions allow us to observe how policies and external factors can influence market efficiency and participant behavior.
 
+## What You Can Learn
+
+Beyond watching buyers and sellers trade, the simulation is built to teach the core *results* of microeconomics:
+
+* **The Round Summary** — after each round you get the headline numbers plus the welfare story:
+  * **Consumer Surplus** — how much buyers saved versus their budget.
+  * **Producer Surplus** — how much sellers earned above their cost.
+  * **Deal Rate** — the share of buyers who successfully bought something (how *many* traded, not how *well*).
+  * **Allocative Efficiency** — the share of the *maximum possible* total surplus the market actually captured. 100% means every beneficial trade happened.
+  * **Deadweight Loss** — the surplus that vanished because some good trades never happened (price controls, taxes, or missed deals).
+* **The Equilibrium Chart** — a live supply-and-demand diagram. Turn on a disruptor and you'll see it drawn right on the chart:
+  * A **price ceiling** or **floor** line, with the resulting **shortage** (red) or **surplus** (blue) shaded in.
+  * A **tax wedge** (yellow) and a **subsidy wedge** (green) showing the gap between what buyers pay and what sellers receive.
+* **Explainer Tooltips** — every metric in the summary has a "?" button. Tap it for a definition and a worked example built from *that round's own numbers*, so the idea clicks using your own data.
+
 ## Installation
 
 ```bash
@@ -70,6 +85,9 @@ npm run dev
 * Price negotiation (bargaining)
 * Adaptive seller pricing behavior
 * Market disruption simulations
+* Round Summary with welfare metrics (consumer/producer surplus, allocative efficiency, deadweight loss)
+* Live equilibrium chart with price-control and tax/subsidy overlays
+* In-app explainer tooltips for every summary metric
 * Educational visualization of economic concepts
 
 ## TODO
