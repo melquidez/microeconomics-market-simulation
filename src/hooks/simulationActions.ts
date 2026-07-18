@@ -21,9 +21,7 @@ export const startRoundAction = (
     spawnAgents: (cfg: Config) => void,
     setRound: Dispatch<SetStateAction<number>>,
     setStatus: Dispatch<SetStateAction<SimStatus>>,
-    lastTimeRef: RefObject<number>,
-    animationFrameRef: RefObject<number | null>,
-    gameLoop: (timestamp: number) => void
+    lastTimeRef: RefObject<number>
 ) => {
     
     
@@ -47,10 +45,9 @@ export const startRoundAction = (
         lastTimeRef.current = performance.now();
     }
 
-    // Start animation loop if not already running
-    if (!animationFrameRef.current) {
-        animationFrameRef.current = requestAnimationFrame(gameLoop);
-    }
+    // NOTE: the animation loop is (re)started by the hook via startLoop(), so
+    // we don't start it here. This keeps loop ownership in one place and lets
+    // the loop stop cleanly when the simulation is not running.
 };
 
 

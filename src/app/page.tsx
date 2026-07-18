@@ -165,14 +165,14 @@ function App() {
             <div className="w-full max-w-350 flex gap-3 mt-3 flex-wrap lg:flex-nowrap">
                 <div className="shrink-0">
                     <Canvas
-                        sellers={sim.sellersRef.current}
-                        buyers={sim.buyersRef.current}
-                        animations={sim.animationsRef.current}
+                        sellersRef={sim.sellersRef}
+                        buyersRef={sim.buyersRef}
+                        animationsRef={sim.animationsRef}
                         round={sim.round}
                         status={sim.status}
                         isSellerActive={sim.isSellerActive}
                         getEffectiveAsk={sim.getEffectiveAsk}
-                        frame={sim.frame}
+                        drawNonce={sim.drawNonce}
                     />
                 </div>
 

@@ -60,12 +60,15 @@ export const useSimulation = (initialConfig: Config) => {
         activeSellers: 0,
         efficiency: '--',
     });
+    // Bumped whenever the static scene changes while the simulation is NOT
+    // running (spawn / reset / disruptor / demand shock) so Canvas repaints once.
+    // During running, Canvas runs its own 60fps loop and ignores this.
+    const [drawNonce, setDrawNonce] = useState<number>(0);
+    const bumpDraw = useCallback(() => setDrawNonce((n) => n + 1), []);
 
-    // Force re-render on each frame (for canvas updates)
-    const [frame, setFrame] = useState(0); 
-
-
-    //
+    // (The canvas is repainted imperatively from the simulation loop via
+    // drawMarket(); no per-frame React state is used, so the app does not
+    // re-render 60fps just to animate the market.)
 
 
     // Memoized helpers in current disruptors
@@ -102,6 +105,12 @@ export const useSimulation = (initialConfig: Config) => {
     const lastTimeRef = useRef<number>(performance.now());
     // Keeps Demand Shock buyer IDs unique across every shock (never resets).
     const shockIdRef = useRef<number>(0);
+    // Mirror of `status` so the loop always reads the latest value without
+    // needing `status` in its dependency array (avoids stale closures).
+    const statusRef = useRef<SimStatus>(status);
+    useEffect(() => {
+        statusRef.current = status;
+    }, [status]);
 
     // Convert speed setting to simulation multiplier
     const getSpeedMultiplier = useCallback(() => {
@@ -160,7 +169,10 @@ export const useSimulation = (initialConfig: Config) => {
 
 
 
-    // Compute market stats from transaction log and current agent states
+    // Compute market stats from transaction log and current agent states.
+    // Guarded so it only calls setStats when a value actually changes — otherwise
+    // it would re-render the whole app on every animation frame.
+    const lastStatsRef = useRef<Stats>(stats);
     const updateStats = useCallback(() => {
         const trans = transactionLog.filter((l) => isSuccessfulOutcome(l.outcome)).length;
         const noDeals = buyersRef.current.filter((b) => b.status === 'noDeal').length;
@@ -168,18 +180,36 @@ export const useSimulation = (initialConfig: Config) => {
 
         const avg = tlogs.length ? (tlogs.reduce((s, l) => s + l.clearingPrice, 0) / tlogs.length).toFixed(1) : '0';
 
-        setStats({
+        const next: Stats = {
             transactions: trans,
             noDeals,
             avgPrice: avg !== '0' ? '₱' + avg : '0',
             activeBuyers: buyersRef.current.filter((b) => b.status === 'searching').length,
             activeSellers: sellersRef.current.filter((s) => isSellerActive(s)).length,
             efficiency: buyersRef.current.length ? ((trans / buyersRef.current.length) * 100).toFixed(1) + '%' : '-',
-        });
-    }, [transactionLog]);
+        };
+
+        const prev = lastStatsRef.current;
+        if (
+            prev.transactions === next.transactions &&
+            prev.noDeals === next.noDeals &&
+            prev.avgPrice === next.avgPrice &&
+            prev.activeBuyers === next.activeBuyers &&
+            prev.activeSellers === next.activeSellers &&
+            prev.efficiency === next.efficiency
+        ) {
+            return;
+        }
+        lastStatsRef.current = next;
+        setStats(next);
+    }, [transactionLog, isSellerActive]);
 
 
 
+
+
+    // (Painting is handled by <Canvas>, which owns its own render loop. The hook
+    // only mutates the agent refs; it does not read them to draw.)
 
     // Create initial agents with random positions and attributes based on config
     // Note: should I make the seller in fixed position?
@@ -221,8 +251,12 @@ export const useSimulation = (initialConfig: Config) => {
             setTransactionLog([]);
             setEquilibriumData([]);
             setDisruptorEvents([]);
+
+            // Repaint the (now static) market once so the spawn is visible
+            // without waiting for the running loop.
+            bumpDraw();
         },
-        [applyDisruptorEffects]
+        [applyDisruptorEffects, bumpDraw]
     );
 
     // Run one frame of simulation (move buyers, handle transactions, apply disruptors)
@@ -268,22 +302,25 @@ export const useSimulation = (initialConfig: Config) => {
     // error and always invokes the newest version).
     const gameLoopRef = useRef<(timestamp: number) => void>(() => {});
 
-    // Main animation loop: run sim step, check end state, trigger canvas redraw
+    // Main animation loop: run one sim step while running, and stop the rAF
+    // entirely when not running (idle/paused/roundEnd) so we are not burning
+    // frames on a static scene or re-rendering React 60fps. Painting is handled
+    // separately by <Canvas>, which owns its own render loop.
     const gameLoop = useCallback(
         (timestamp: number) => {
-            if (status === 'running') {
+            if (statusRef.current === 'running') {
                 const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.1);
                 lastTimeRef.current = timestamp;
                 updateSimulation(dt);
                 checkRoundEnd();
+                // Schedule the next frame via the ref so we always call the
+                // newest gameLoop (reads the latest status/options).
+                animationFrameRef.current = requestAnimationFrame((t) => gameLoopRef.current(t));
+            } else {
+                animationFrameRef.current = null;
             }
-            // Keep looping even when paused (for canvas rendering).
-            // Schedule via the ref so we don't reference gameLoop inside its own initializer.
-            animationFrameRef.current = requestAnimationFrame(gameLoopRef.current);
-            // Force re-render to update canvas
-            setFrame((f) => f + 1);
         },
-        [status, updateSimulation, checkRoundEnd]
+        [updateSimulation, checkRoundEnd]
     );
 
     // Keep gameLoopRef pointed at the latest gameLoop after each render.
@@ -291,39 +328,60 @@ export const useSimulation = (initialConfig: Config) => {
         gameLoopRef.current = gameLoop;
     });
 
+    // Stable helper to (re)start the rAF loop. Guards against double-starting.
+    const startLoop = useCallback(() => {
+        if (!animationFrameRef.current) {
+            animationFrameRef.current = requestAnimationFrame((t) => gameLoopRef.current(t));
+        }
+    }, []);
+
     // Public action handlers
     const startRound = useCallback(
-        () => startRoundAction(status, config, spawnAgents, setRound, setStatus, lastTimeRef, animationFrameRef, gameLoop),
-        [status, config, spawnAgents, setRound, setStatus, lastTimeRef, animationFrameRef, gameLoop]
+        () => {
+            startRoundAction(status, config, spawnAgents, setRound, setStatus, lastTimeRef);
+            startLoop();
+        },
+        [status, config, spawnAgents, setRound, setStatus, lastTimeRef, startLoop]
     );
 
     const togglePause = useCallback(
-        () => togglePauseAction(status, setStatus, lastTimeRef),
-        [status, setStatus, lastTimeRef]
+        () => {
+            togglePauseAction(status, setStatus, lastTimeRef);
+            // Resume the loop if we just un-paused. (startLoop no-ops while a
+            // frame is already scheduled, e.g. when pausing.)
+            startLoop();
+        },
+        [status, setStatus, lastTimeRef, startLoop]
     );
 
     const resetSimulation = useCallback(
-        () => resetSimulationAction(
-            config,
-            spawnAgents,
-            setStatus,
-            setRound,
-            sellersRef,
-            buyersRef,
-            animationsRef,
-            setTransactionLog,
-            setEquilibriumData,
-            setDisruptorEvents,
-            setDisruptors,
-            setStats,
-            animationFrameRef
-        ),
-        [config, spawnAgents, setStatus, setRound, setTransactionLog, setEquilibriumData, setDisruptorEvents, setDisruptors, setStats]
+        () => {
+            resetSimulationAction(
+                config,
+                spawnAgents,
+                setStatus,
+                setRound,
+                sellersRef,
+                buyersRef,
+                animationsRef,
+                setTransactionLog,
+                setEquilibriumData,
+                setDisruptorEvents,
+                setDisruptors,
+                setStats,
+                animationFrameRef
+            );
+            bumpDraw();
+        },
+        [config, spawnAgents, setStatus, setRound, setTransactionLog, setEquilibriumData, setDisruptorEvents, setDisruptors, setStats, bumpDraw]
     );
 
     const nextRound = useCallback(
-        () => nextRoundAction(status, setStatus, setRound, spawnAgents, config),
-        [status, setStatus, setRound, spawnAgents, config]
+        () => {
+            nextRoundAction(status, setStatus, setRound, spawnAgents, config);
+            bumpDraw();
+        },
+        [status, setStatus, setRound, spawnAgents, config, bumpDraw]
     );
 
     // Mark a transaction with a label for disruptor timeline
@@ -352,12 +410,15 @@ export const useSimulation = (initialConfig: Config) => {
                 buyersRef.current.push(newBuyer);
             }
             addDisruptorMarker(`Demand Shock +${num}`);
+            bumpDraw();
         },
-        [config, addDisruptorMarker]
+        [config, addDisruptorMarker, bumpDraw]
     );
 
     // Side effects
-    // Re-apply disruptor logic when they change
+    // Re-apply disruptor logic when they change. Canvas repaints on its own
+    // because isSellerActive/getEffectiveAsk (deps of its render effect) change
+    // identity whenever disruptors change.
     useEffect(() => {
         applyDisruptorEffects();
     }, [disruptors, applyDisruptorEffects]);
@@ -367,18 +428,16 @@ export const useSimulation = (initialConfig: Config) => {
         updateStats();
     }, [transactionLog, updateStats]);
 
-    // Start animation loop on mount, cleanup on unmount
+    // Start animation loop on mount, cleanup on unmount (loop is otherwise
+    // started/stopped by the action handlers via startLoop).
     useEffect(() => {
-        if (!animationFrameRef.current) {
-            animationFrameRef.current = requestAnimationFrame(gameLoop);
-        }
         return () => {
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = null;
             }
         };
-    }, [gameLoop]);
+    }, []);
 
     // Export hook state and actions for UI
     return {
@@ -418,6 +477,6 @@ export const useSimulation = (initialConfig: Config) => {
         setBargaining,
         bargainPct,
         setBargainPct,
-        frame
+        drawNonce
     };
 };
