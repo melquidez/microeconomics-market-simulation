@@ -16,6 +16,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import type { AnnotationOptions } from 'chartjs-plugin-annotation';
 import { DisruptorEvent, ChartAnnotations, Theme } from '../types';
 import { DealPriceChart } from './DealPriceChart';
+import { useThemeMix, mixAxis } from '../utils/themeColors';
 
 ChartJS.register(
     CategoryScale,
@@ -46,7 +47,8 @@ interface ChartProps {
 }
 
 export const Chart = ({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, disruptorAnnotations, onDealClick, theme }: ChartProps) => {
-    const axis = theme === 'dark' ? AXIS_DARK : AXIS_LIGHT;
+    const mix = useThemeMix(theme);
+    const axis = useMemo(() => mixAxis(AXIS_LIGHT, AXIS_DARK, mix), [mix]);
 
     // Top chart: equilibrium cross only (quantity space — no time events here).
     const mainAnnotations = useMemo(() => {

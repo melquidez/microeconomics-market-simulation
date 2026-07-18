@@ -4,7 +4,36 @@
    `darkMode: 'class'`. `next-themes` toggles `.dark` on <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Register the theme color custom properties as real <color> values so they
+   can be transitioned. Without @property, custom properties snap instantly
+   when `.dark` is toggled — with it, they animate and the whole UI fades
+   like dawn to dusk. */
+@property --background { syntax: '<color>'; inherits: true; initial-value: #f4f6f9; }
+@property --foreground { syntax: '<color>'; inherits: true; initial-value: #0f172a; }
+@property --panel { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --surface-2 { syntax: '<color>'; inherits: true; initial-value: #eef1f5; }
+@property --border { syntax: '<color>'; inherits: true; initial-value: #e2e8f0; }
+@property --muted { syntax: '<color>'; inherits: true; initial-value: #64748b; }
+@property --track { syntax: '<color>'; inherits: true; initial-value: #cbd5e1; }
+@property --accent { syntax: '<color>'; inherits: true; initial-value: #2563eb; }
+@property --accent-hover { syntax: '<color>'; inherits: true; initial-value: #1d4ed8; }
+@property --primary { syntax: '<color>'; inherits: true; initial-value: #2563eb; }
+@property --primary-hover { syntax: '<color>'; inherits: true; initial-value: #1d4ed8; }
+@property --success { syntax: '<color>'; inherits: true; initial-value: #16a34a; }
+@property --danger { syntax: '<color>'; inherits: true; initial-value: #dc2626; }
+@property --buyer { syntax: '<color>'; inherits: true; initial-value: #b45309; }
+@property --seller { syntax: '<color>'; inherits: true; initial-value: #2563eb; }
+
 :root {
+  /* Smooth light<->dark cross-fade. These custom properties are registered
+     above so they animate; flipping `.dark` transitions them all at once.
+     Keep the duration in sync with THEME_TRANSITION_MS in utils/themeColors. */
+  transition: --background 0.7s ease, --foreground 0.7s ease, --panel 0.7s ease,
+    --surface-2 0.7s ease, --border 0.7s ease, --muted 0.7s ease, --track 0.7s ease,
+    --accent 0.7s ease, --accent-hover 0.7s ease, --primary 0.7s ease,
+    --primary-hover 0.7s ease, --success 0.7s ease, --danger 0.7s ease,
+    --buyer 0.7s ease, --seller 0.7s ease;
+
   --background: #f4f6f9;
   --foreground: #0f172a;
   --panel: #ffffff;

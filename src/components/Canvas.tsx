@@ -1,5 +1,6 @@
-import { useEffect, useRef, RefObject } from 'react';
+import { useEffect, useMemo, useRef, RefObject } from 'react';
 import { Seller, Buyer, SimStatus, Theme } from '../types';
+import { useThemeMix, mixPalette } from '../utils/themeColors';
 
 // Canvas palette for each theme. The 2D context can't read CSS variables, so
 // the page passes the right palette based on the active theme (see useTheme).
@@ -241,7 +242,8 @@ interface CanvasProps {
 export const Canvas = (props: CanvasProps) => {
     const { sellersRef, buyersRef, animationsRef, round, status, isSellerActive, getEffectiveAsk, drawNonce, theme } = props;
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const colors = theme === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+    const mix = useThemeMix(theme);
+    const colors = useMemo(() => mixPalette(LIGHT_COLORS, DARK_COLORS, mix), [mix]);
 
     useEffect(() => {
         const canvas = canvasRef.current;

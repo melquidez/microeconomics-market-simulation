@@ -18,6 +18,7 @@ import {
 import annotationPlugin from 'chartjs-plugin-annotation';
 import type { AnnotationOptions } from 'chartjs-plugin-annotation';
 import { DisruptorEvent, ChartAnnotations, Theme } from '../types';
+import { useThemeMix, mixAxis } from '../utils/themeColors';
 
 ChartJS.register(
     CategoryScale,
@@ -43,7 +44,8 @@ interface DealPriceChartProps {
 }
 
 export const DealPriceChart = ({ clearingData, disruptorEvents, onDealClick, theme }: DealPriceChartProps) => {
-    const axis = theme === 'dark' ? AXIS_DARK : AXIS_LIGHT;
+    const mix = useThemeMix(theme);
+    const axis = useMemo(() => mixAxis(AXIS_LIGHT, AXIS_DARK, mix), [mix]);
 
     // Disruptor shocks are time events, so they belong on the "deal order"
     // axis (x = transaction number), not the quantity axis.
