@@ -243,6 +243,47 @@ function App() {
                 borderDash: [3, 3],
             };
         }
+        if (disruptors.subsidy && equilibrium) {
+            // A subsidy shifts the effective supply curve down by the per-unit
+            // amount, so the drawn supply already reflects it and `pe` is the
+            // (lower) price consumers pay. Producers receive pe + subsidy; the
+            // wedge between the two is the government's per-unit payment.
+            const sub = disruptors.subsidy.amount;
+            disruptorAnnotations['subsidyWedge'] = {
+                type: 'box',
+                xMin: Math.max(0, equilibrium.qe - 3),
+                xMax: equilibrium.qe + 3,
+                yMin: equilibrium.pe,
+                yMax: equilibrium.pe + sub,
+                backgroundColor: 'rgba(34,197,94,0.18)',
+                borderWidth: 0,
+                label: {
+                    content: `Subsidy ₱${sub}`,
+                    enabled: true,
+                    position: 'center',
+                    color: '#bbf7d0',
+                    font: { size: 10, weight: 'bold' as const },
+                },
+            };
+            disruptorAnnotations['subsidyProducerReceive'] = {
+                type: 'line',
+                scaleID: 'y',
+                value: equilibrium.pe + sub,
+                borderColor: 'rgba(34,197,94,0.9)',
+                borderWidth: 1.5,
+                borderDash: [3, 3],
+                label: {
+                    content: `Producer gets ₱${equilibrium.pe + sub}`,
+                    enabled: true,
+                    position: 'end',
+                    backgroundColor: 'rgba(34,197,94,0.9)',
+                    color: '#fff',
+                    font: { size: 10, weight: 'bold' as const },
+                    padding: 3,
+                    cornerRadius: 4,
+                },
+            };
+        }
 
         return { supplyData: supplyPoints, demandData: demandPoints, clearingData: clearing, equilibrium, disruptorAnnotations };
     }, [sim.sellersRef.current, sim.buyersRef.current, sim.equilibriumData, sim.getEffectiveCost, sim.disruptors]);
