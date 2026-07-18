@@ -3,9 +3,12 @@ import {
     Buyer,
     Config,
     DisruptorEvent,
+    DisruptorState,
     DisruptorType,
     Seller,
     SimStatus,
+    Stats,
+    TransactionLogEntry,
 } from '../types';
 
 
@@ -30,8 +33,10 @@ export const startRoundAction = (
     // Generate buyers and sellers
     spawnAgents(config);
 
-    // Initialize round and start simulation
-    setRound(1);
+    // Start the simulation. The round number is already correct: it is 1 on
+    // first load / after reset (resetSimulationAction sets it), and is
+    // incremented by nextRoundAction between rounds. Do NOT reset it here,
+    // otherwise every round after the first would display as "Round 1".
     setStatus('running');
 
     
@@ -85,11 +90,11 @@ export const resetSimulationAction = (
     sellersRef: RefObject<Seller[]>,
     buyersRef: RefObject<Buyer[]>,
     animationsRef: RefObject<{ x: number; y: number; type: string; timer: number; maxTimer: number }[]>,
-    setTransactionLog: Dispatch<SetStateAction<any[]>>,
+    setTransactionLog: Dispatch<SetStateAction<TransactionLogEntry[]>>,
     setEquilibriumData: Dispatch<SetStateAction<{ transactionNum: number; clearingPrice: number }[]>>,
     setDisruptorEvents: Dispatch<SetStateAction<DisruptorEvent[]>>,
-    setDisruptors: Dispatch<SetStateAction<any>>,
-    setStats: Dispatch<SetStateAction<any>>,
+    setDisruptors: Dispatch<SetStateAction<DisruptorState>>,
+    setStats: Dispatch<SetStateAction<Stats>>,
     animationFrameRef: RefObject<number | null>
 ) => {
     // Return simulation to initial state
@@ -175,35 +180,39 @@ export const addDisruptorMarkerAction = (
     ]);
 };
 
-// Enables or disables a market disruptor
+// Enables or disables a market disruptor.
+// NOTE: the marker is added OUTSIDE the setDisruptors updater so the updater
+// stays pure. Calling setState inside an updater double-fires under React 19
+// StrictMode, which would drop duplicate markers on the deal-price chart.
 export const toggleDisruptorAction = (
     type: DisruptorType,
     amount: number,
-    setDisruptors: Dispatch<SetStateAction<any>>,
+    currentDisruptors: DisruptorState,
+    setDisruptors: Dispatch<SetStateAction<DisruptorState>>,
     addDisruptorMarker: (label: string) => void
 ) => {
-    setDisruptors((prev: any) => {
-        const newDisruptors = { ...prev };
+    const isActive = currentDisruptors[type] !== null;
 
-        // Turn off disruptor if already active
-        if (prev[type]) {
+    if (!isActive) {
+        addDisruptorMarker(
+            type === 'priceCeiling'
+                ? 'Price Ceiling'
+                : type === 'priceFloor'
+                    ? 'Price Floor'
+                    : type === 'tax'
+                        ? 'Tax Applied'
+                        : 'Subsidy Applied'
+        );
+    }
+
+    setDisruptors((prev) => {
+        const newDisruptors = { ...prev };
+        if (isActive) {
             newDisruptors[type] = null;
         } else {
             // Activate disruptor with specified amount
             newDisruptors[type] = { amount };
-
-            // Add event marker for tracking/charting
-            addDisruptorMarker(
-                type === 'priceCeiling'
-                    ? 'Price Ceiling'
-                    : type === 'priceFloor'
-                        ? 'Price Floor'
-                        : type === 'tax'
-                            ? 'Tax Applied'
-                            : 'Subsidy Applied'
-            );
         }
-
         return newDisruptors;
     });
 };

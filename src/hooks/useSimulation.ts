@@ -263,6 +263,11 @@ export const useSimulation = (initialConfig: Config) => {
         );
     }, [isSellerActive, logTransaction, setStatus]);
 
+    // Ref to the latest gameLoop so the rAF self-reschedule never reads
+    // `gameLoop` before it is declared (avoids the react-hooks/immutability
+    // error and always invokes the newest version).
+    const gameLoopRef = useRef<(timestamp: number) => void>(() => {});
+
     // Main animation loop: run sim step, check end state, trigger canvas redraw
     const gameLoop = useCallback(
         (timestamp: number) => {
@@ -272,13 +277,19 @@ export const useSimulation = (initialConfig: Config) => {
                 updateSimulation(dt);
                 checkRoundEnd();
             }
-            // Keep looping even when paused (for canvas rendering)
-            animationFrameRef.current = requestAnimationFrame(gameLoop);
+            // Keep looping even when paused (for canvas rendering).
+            // Schedule via the ref so we don't reference gameLoop inside its own initializer.
+            animationFrameRef.current = requestAnimationFrame(gameLoopRef.current);
             // Force re-render to update canvas
             setFrame((f) => f + 1);
         },
         [status, updateSimulation, checkRoundEnd]
     );
+
+    // Keep gameLoopRef pointed at the latest gameLoop after each render.
+    useEffect(() => {
+        gameLoopRef.current = gameLoop;
+    });
 
     // Public action handlers
     const startRound = useCallback(
@@ -322,8 +333,9 @@ export const useSimulation = (initialConfig: Config) => {
     );
 
     const toggleDisruptor = useCallback(
-        (type: DisruptorType, amount: number) => toggleDisruptorAction(type, amount, setDisruptors, addDisruptorMarker),
-        [setDisruptors, addDisruptorMarker]
+        (type: DisruptorType, amount: number) =>
+            toggleDisruptorAction(type, amount, disruptors, setDisruptors, addDisruptorMarker),
+        [disruptors, setDisruptors, addDisruptorMarker]
     );
 
     // Add new buyers mid-round to simulate demand shock
