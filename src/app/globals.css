@@ -1,30 +1,76 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode — the Tailwind v4 equivalent of v3's
+   `darkMode: 'class'`. `next-themes` toggles `.dark` on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f6f9;
+  --foreground: #0f172a;
+  --panel: #ffffff;
+  --surface-2: #eef1f5;
+  --border: #e2e8f0;
+  --muted: #64748b;
+  --track: #cbd5e1;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --buyer: #b45309;
+  --seller: #2563eb;
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.10), 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
-@theme {
-  --color-panel: #1a1d23;
-  --color-border: #2a2d35;
-  --color-muted: #9ca3af;
-  --color-buyer: #eab308;
-  --color-seller: #60a5fa;
-  --color-success: #22c55e;
-  --color-danger: #ef4444;
+/* Dark theme overrides for the same custom properties. Because the semantic
+   utilities (bg-background, text-foreground, …) reference these vars via
+   `@theme inline`, flipping them under `.dark` re-themes the whole app. */
+.dark {
+  --background: #0b1120;
+  --foreground: #e2e8f0;
+  --panel: #111827;
+  --surface-2: #1e293b;
+  --border: #334155;
+  --muted: #94a3b8;
+  --track: #475569;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --buyer: #f59e0b;
+  --seller: #3b82f6;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-track: var(--track);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-buyer: var(--buyer);
+  --color-seller: var(--seller);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
 
-  --color-accent: var(--color-blue-500);
-
-  --color-primary: var(--color-blue-500);
-  --color-primary-hover: var(--color-blue-600);
+/* Consistent elevated surface used by every panel. */
+.panel {
+  background-color: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow);
 }
 
 button {
@@ -35,23 +81,14 @@ button:disabled {
   background-color: var(--color-gray-500);
   color: var(--color-white);
   cursor: not-allowed;
-} 
+}
 
 button:disabled:hover {
   background-color: var(--color-gray-500);
 }
 
-
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }

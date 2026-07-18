@@ -14,7 +14,7 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import type { AnnotationOptions } from 'chartjs-plugin-annotation';
-import { DisruptorEvent, ChartAnnotations } from '../types';
+import { DisruptorEvent, ChartAnnotations, Theme } from '../types';
 import { DealPriceChart } from './DealPriceChart';
 
 ChartJS.register(
@@ -29,6 +29,11 @@ ChartJS.register(
     annotationPlugin
 );
 
+// Axis/grid/label colors per theme (the canvas can't read CSS vars, so the
+// page passes the active theme through and we pick the matching palette).
+const AXIS_LIGHT = { grid: 'rgba(15,23,42,0.08)', tick: '#475569', title: '#64748b', legend: '#64748b' };
+const AXIS_DARK = { grid: 'rgba(148,163,184,0.10)', tick: '#94a3b8', title: '#94a3b8', legend: '#94a3b8' };
+
 interface ChartProps {
     supplyData: { x: number; y: number }[];
     demandData: { x: number; y: number }[];
@@ -37,9 +42,12 @@ interface ChartProps {
     equilibrium: { qe: number; pe: number } | null;
     disruptorAnnotations?: ChartAnnotations;
     onDealClick?: (transactionNum: number) => void;
+    theme: Theme;
 }
 
-export const Chart = ({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, disruptorAnnotations, onDealClick }: ChartProps) => {
+export const Chart = ({ supplyData, demandData, clearingData, disruptorEvents, equilibrium, disruptorAnnotations, onDealClick, theme }: ChartProps) => {
+    const axis = theme === 'dark' ? AXIS_DARK : AXIS_LIGHT;
+
     // Top chart: equilibrium cross only (quantity space — no time events here).
     const mainAnnotations = useMemo(() => {
         const ann: ChartAnnotations = {};
@@ -129,7 +137,7 @@ export const Chart = ({ supplyData, demandData, clearingData, disruptorEvents, e
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 14 },
+                labels: { color: axis.legend, font: { size: 11 }, boxWidth: 14 },
             },
             annotation: {
                 annotations: { ...mainAnnotations, ...(disruptorAnnotations ?? {}) } as unknown as Record<string, AnnotationOptions>,
@@ -138,15 +146,15 @@ export const Chart = ({ supplyData, demandData, clearingData, disruptorEvents, e
         scales: {
             x: {
                 type: 'linear',
-                title: { display: true, text: 'Quantity', color: '#9ca3af', font: { size: 10 } },
-                ticks: { color: '#6b7280', stepSize: 1 },
-                grid: { color: '#2a2d35' },
+                title: { display: true, text: 'Quantity', color: axis.title, font: { size: 10 } },
+                ticks: { color: axis.tick, stepSize: 1 },
+                grid: { color: axis.grid },
                 min: 0,
             },
             y: {
-                title: { display: true, text: 'Price (₱)', color: '#9ca3af', font: { size: 10 } },
-                ticks: { color: '#6b7280' },
-                grid: { color: '#2a2d35' },
+                title: { display: true, text: 'Price (₱)', color: axis.title, font: { size: 10 } },
+                ticks: { color: axis.tick },
+                grid: { color: axis.grid },
                 min: 0,
             },
         },
@@ -159,7 +167,7 @@ export const Chart = ({ supplyData, demandData, clearingData, disruptorEvents, e
             <div className="relative" style={{ height: '260px' }}>
                 <Line data={{ datasets: mainDatasets }} options={mainOptions} plugins={[annotationPlugin]} />
             </div>
-            <DealPriceChart clearingData={clearingData} disruptorEvents={disruptorEvents} onDealClick={onDealClick} />
+            <DealPriceChart clearingData={clearingData} disruptorEvents={disruptorEvents} onDealClick={onDealClick} theme={theme} />
         </div>
     );
 };

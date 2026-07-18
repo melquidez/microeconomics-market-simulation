@@ -122,3 +122,6 @@ export interface ChartAnnotation {
 }
 
 export type ChartAnnotations = Record<string, ChartAnnotation>;
+
+// UI color theme. Light is the default; `next-themes` toggles `.dark` on <html>.
+export type Theme = 'light' | 'dark';

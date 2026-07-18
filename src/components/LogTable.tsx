@@ -58,7 +58,7 @@ export const LogTable: React.FC<LogTableProps> = ({ logs, selectedTransaction })
                                 key={idx}
                                 data-tnum={entry.transactionNum}
                                 className={
-                                    (typeof entry.outcome === 'string' && entry.outcome.startsWith('Transacted') ? 'text-gray-200' : 'text-gray-500') +
+                                    (typeof entry.outcome === 'string' && entry.outcome.startsWith('Transacted') ? 'text-foreground' : 'text-muted') +
                                     (selectedTransaction != null && entry.transactionNum > 0 && entry.transactionNum === selectedTransaction ? ' bg-accent/20' : '') +
                                     ' cursor-pointer'
                                 }

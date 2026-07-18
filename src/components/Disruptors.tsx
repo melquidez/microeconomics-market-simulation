@@ -44,14 +44,14 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
             <div className="flex flex-col gap-2 text-xs">
                 {/* Price Ceiling */}
                 <div className={`flex items-center gap-2 flex-wrap ${disruptors.priceCeiling ? 'disruptor-active bg-red-900/20 border border-danger rounded-lg p-2' : ''}`}>
-                    <span className="w-20 text-gray-300">Price Ceiling:</span>
+                    <span className="w-20 text-muted">Price Ceiling:</span>
                     <input
                         type="number"
                         ref={ceilingInputRef}
                         defaultValue={100}
                         min={10}
                         max={300}
-                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-foreground rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -66,14 +66,14 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
 
                 {/* Price Floor */}
                 <div className={`flex items-center gap-2 flex-wrap ${disruptors.priceFloor ? 'disruptor-active bg-red-900/20 border border-danger rounded-lg p-2' : ''}`}>
-                    <span className="w-20 text-gray-300">Price Floor:</span>
+                    <span className="w-20 text-muted">Price Floor:</span>
                     <input
                         type="number"
                         ref={floorInputRef}
                         defaultValue={80}
                         min={10}
                         max={300}
-                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-foreground rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -88,14 +88,14 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
 
                 {/* Tax */}
                 <div className={`flex items-center gap-2 flex-wrap ${disruptors.tax ? 'disruptor-active bg-red-900/20 border border-danger rounded-lg p-2' : ''}`}>
-                    <span className="w-20 text-gray-300">Tax on Sellers:</span>
+                    <span className="w-20 text-muted">Tax on Sellers:</span>
                     <input
                         type="number"
                         ref={taxInputRef}
                         defaultValue={15}
                         min={1}
                         max={100}
-                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-foreground rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -110,14 +110,14 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
 
                 {/* Subsidy */}
                 <div className={`flex items-center gap-2 flex-wrap ${disruptors.subsidy ? 'disruptor-active bg-green-900/20 border border-success rounded-lg p-2' : ''}`}>
-                    <span className="w-20 text-gray-300">Subsidy:</span>
+                    <span className="w-20 text-muted">Subsidy:</span>
                     <input
                         type="number"
                         ref={subsidyInputRef}
                         defaultValue={15}
                         min={1}
                         max={100}
-                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-foreground rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"
@@ -132,14 +132,14 @@ export const Disruptors: React.FC<DisruptorsProps> = ({
 
                 {/* Demand Shock */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <span className="w-20 text-gray-300">Demand Shock:</span>
+                    <span className="w-20 text-muted">Demand Shock:</span>
                     <input
                         type="number"
                         ref={shockInputRef}
                         defaultValue={5}
                         min={1}
                         max={20}
-                        className="w-16 bg-panel border border-border text-gray-200 rounded-md px-2 py-1 text-xs"
+                        className="w-16 bg-panel border border-border text-foreground rounded-md px-2 py-1 text-xs"
                     />
                     <button
                         className="btn-outline border border-accent text-accent rounded-md px-3 py-1 text-xs"

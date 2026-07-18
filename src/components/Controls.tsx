@@ -27,7 +27,7 @@ const SpeedButton: React.FC<{
 }> = ({ label, active, onClick }) => {
     const baseClasses = 'px-3 py-1 text-xs rounded-md font-medium transition-all duration-200';
     const activeClasses = 'bg-primary text-black shadow-md transform scale-105 ring-2 ring-primary/50';
-    const inactiveClasses = 'bg-panel border border-border text-muted hover:text-white hover:bg-gray-700';
+    const inactiveClasses = 'bg-panel border border-border text-muted hover:text-foreground hover:bg-surface-2';
     
     return (
         <button
@@ -51,7 +51,7 @@ const ToggleSwitch: React.FC<{
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 ${checked ? 'bg-primary' : 'bg-gray-600'}`}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 ${checked ? 'bg-primary' : 'bg-track'}`}
     >
         <span
             className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${checked ? 'translate-x-[22px]' : 'translate-x-[2px]'}`}
@@ -64,12 +64,12 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
     <div className="relative group">
         {children}
         <div
-            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-gray-800 text-white rounded-md 
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-[#111827] text-white rounded-md 
                        opacity-0 invisible group-hover:opacity-100 group-hover:visible 
                        transition-all duration-200 whitespace-nowrap z-50"
         >
             {text}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 -mt-1"></div>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-[#111827] -mt-1"></div>
         </div>
     </div>
 );
@@ -123,7 +123,7 @@ export const Controls: React.FC<ControlsProps> = ({
                 
                 <Tooltip text="End current round and prepare for next (keeps same config)">
                     <button
-                        className="btn-primary bg-green-400 hover:bg-green-500 text-black font-semibold rounded-md px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn-primary bg-success hover:brightness-110 text-black font-semibold rounded-md px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={onNext}
                         disabled={!canNext}
                         aria-label="Prepare next round"

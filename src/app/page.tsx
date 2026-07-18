@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ChartAnnotations } from '../types';
+import { ChartAnnotations, Theme } from '../types';
 import { useSimulation } from '../hooks/useSimulation';
 import { Canvas } from '../components/Canvas';
 import { Controls } from '../components/Controls';
@@ -12,6 +12,9 @@ import { Chart } from '../components/Chart';
 import { LogTable } from '../components/LogTable';
 
 import { SummaryModal } from '@/components/SummaryModal';
+import { VersionBadge } from '@/components/VersionBadge';
+import { useTheme } from 'next-themes';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartArea } from '@fortawesome/free-solid-svg-icons';
@@ -30,6 +33,9 @@ function App() {
     };
 
     const sim = useSimulation(initialConfig);
+    const { resolvedTheme } = useTheme();
+    // next-themes is `undefined` pre-mount; default to light to match SSR.
+    const theme: Theme = (resolvedTheme as Theme) ?? 'light';
 
     const [summaryDismissed, setSummaryDismissed] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<number | null>(null);
@@ -296,16 +302,16 @@ function App() {
     // Chart updates reactively through <Chart> props (datasets + annotations).
 
     return (
-        <div className="min-h-screen flex flex-col items-center py-4 px-3 bg-panel text-gray-300 font-['Inter']">
-            <header className="w-full max-w-full flex items-center justify-between mb-3 px-2">
+        <div className="min-h-screen flex flex-col items-center px-3 py-4 bg-background text-foreground">
+            <header className="sticky top-0 z-30 w-full flex items-center justify-between mb-3 px-2 py-2 bg-background/80 backdrop-blur border-b border-border">
                 <div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Microeconomics Simulation</h1>
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight">Microeconomics Simulation</h1>
                     <p className="text-xs text-muted">Watch the market find its way!</p>
                 </div>
 
 
                 <div className="flex gap-2 items-center">
-                    <span className="stat-badge text-white font-semibold bg-panel rounded-md px-3 py-1 text-sm">
+                    <span className="stat-badge text-foreground font-semibold bg-panel rounded-md px-3 py-1 text-sm">
                         Round {sim.round}
                     </span>
                     <span
@@ -326,6 +332,9 @@ function App() {
                                     ? 'Paused'
                                     : 'Round Ended'}
                     </span>
+                    <ThemeToggle />
+                    <span className="hidden h-5 w-px bg-border sm:block" />
+                    <VersionBadge />
                 </div>
             </header>
 
@@ -340,6 +349,7 @@ function App() {
                         isSellerActive={sim.isSellerActive}
                         getEffectiveAsk={sim.getEffectiveAsk}
                         drawNonce={sim.drawNonce}
+                        theme={theme}
                     />
                 </div>
 
@@ -390,6 +400,7 @@ function App() {
                         equilibrium={equilibrium}
                         disruptorAnnotations={disruptorAnnotations}
                         onDealClick={setSelectedTransaction}
+                        theme={theme}
                     />
                 </div>
 

@@ -92,7 +92,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
         className="bg-panel border border-border rounded-xl p-6 max-w-md w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
       >
-        <h2 className="text-xl font-bold text-white mb-3">
+        <h2 className="text-xl font-bold text-foreground mb-3">
           <FontAwesomeIcon icon={faChartBar} className="text-green-500 mr-1" />
           Round Summary
         </h2>

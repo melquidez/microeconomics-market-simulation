@@ -17,7 +17,7 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import type { AnnotationOptions } from 'chartjs-plugin-annotation';
-import { DisruptorEvent, ChartAnnotations } from '../types';
+import { DisruptorEvent, ChartAnnotations, Theme } from '../types';
 
 ChartJS.register(
     CategoryScale,
@@ -31,13 +31,20 @@ ChartJS.register(
     annotationPlugin
 );
 
+// Axis/grid/label colors per theme (canvas can't read CSS vars).
+const AXIS_LIGHT = { grid: 'rgba(15,23,42,0.08)', tick: '#475569', title: '#64748b', legend: '#64748b' };
+const AXIS_DARK = { grid: 'rgba(148,163,184,0.10)', tick: '#94a3b8', title: '#94a3b8', legend: '#94a3b8' };
+
 interface DealPriceChartProps {
     clearingData: { x: number; y: number }[];
     disruptorEvents: DisruptorEvent[];
     onDealClick?: (transactionNum: number) => void;
+    theme: Theme;
 }
 
-export const DealPriceChart = ({ clearingData, disruptorEvents, onDealClick }: DealPriceChartProps) => {
+export const DealPriceChart = ({ clearingData, disruptorEvents, onDealClick, theme }: DealPriceChartProps) => {
+    const axis = theme === 'dark' ? AXIS_DARK : AXIS_LIGHT;
+
     // Disruptor shocks are time events, so they belong on the "deal order"
     // axis (x = transaction number), not the quantity axis.
     const clearingAnnotations = useMemo(() => {
@@ -110,15 +117,15 @@ export const DealPriceChart = ({ clearingData, disruptorEvents, onDealClick }: D
         scales: {
             x: {
                 type: 'linear',
-                title: { display: true, text: 'Deal # (order of sale)', color: '#9ca3af', font: { size: 10 } },
-                ticks: { color: '#6b7280', stepSize: 1 },
-                grid: { color: '#2a2d35' },
+                title: { display: true, text: 'Deal # (order of sale)', color: axis.title, font: { size: 10 } },
+                ticks: { color: axis.tick, stepSize: 1 },
+                grid: { color: axis.grid },
                 min: 0,
             },
             y: {
-                title: { display: true, text: 'Price (₱)', color: '#9ca3af', font: { size: 10 } },
-                ticks: { color: '#6b7280' },
-                grid: { color: '#2a2d35' },
+                title: { display: true, text: 'Price (₱)', color: axis.title, font: { size: 10 } },
+                ticks: { color: axis.tick },
+                grid: { color: axis.grid },
                 min: 0,
             },
         },

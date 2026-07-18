@@ -119,18 +119,18 @@ export const ExplanationModal: React.FC<{
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-bold text-white">{t.title}</h3>
+          <h3 className="text-lg font-bold text-foreground">{t.title}</h3>
           <button
             type="button"
             aria-label="Close explanation"
             onClick={onClose}
-            className="text-muted hover:text-white"
+            className="text-muted hover:text-foreground"
           >
             <FontAwesomeIcon icon={faClose} />
           </button>
         </div>
-        <p className="text-sm text-gray-300 mb-3">{t.body}</p>
-        <div className="bg-black/30 rounded-md p-3 text-sm text-gray-200 border border-border">
+        <p className="text-sm text-muted mb-3">{t.body}</p>
+        <div className="bg-surface-2 rounded-md p-3 text-sm text-foreground border border-border">
           <div className="text-accent font-semibold mb-1 text-xs uppercase tracking-wide">
             Example from this round
           </div>
