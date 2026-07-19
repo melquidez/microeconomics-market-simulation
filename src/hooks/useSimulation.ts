@@ -18,8 +18,7 @@ import {
     isSellerActive as helperIsSellerActive,
     findTargetForBuyer as helperFindTargetForBuyer,
     isSuccessfulOutcome,
-    computeMaxSurplus,
-    computeRealizedSurplus,
+    computeStats,
     createSeller,
     createBuyer,
     buildTransactionEntry,
@@ -178,34 +177,7 @@ export const useSimulation = (initialConfig: Config) => {
     // it would re-render the whole app on every animation frame.
     const lastStatsRef = useRef<Stats>(stats);
     const updateStats = useCallback(() => {
-        const trans = transactionLog.filter((l) => isSuccessfulOutcome(l.outcome)).length;
-        const noDeals = buyersRef.current.filter((b) => b.status === 'noDeal').length;
-        const tlogs = transactionLog.filter((l) => isSuccessfulOutcome(l.outcome));
-
-        const avg = tlogs.length ? (tlogs.reduce((s, l) => s + l.clearingPrice, 0) / tlogs.length).toFixed(1) : '0';
-
-        // Welfare metrics. Max/realized surplus use the seller's BASE cost so
-        // that taxes and subsidies (government transfers) are netted out of
-        // allocative efficiency and deadweight loss. The equilibrium chart
-        // still uses the effective cost (which includes tax/subsidy) for the
-        // supply curve and wedges.
-        const maxSurplus = computeMaxSurplus(sellersRef.current, buyersRef.current, (s) => s.costOfGoods);
-        const realizedSurplus = computeRealizedSurplus(transactionLog);
-
-        const next: Stats = {
-            transactions: trans,
-            noDeals,
-            avgPrice: avg !== '0' ? '₱' + avg : '0',
-            activeBuyers: buyersRef.current.filter((b) => b.status === 'searching').length,
-            activeSellers: sellersRef.current.filter((s) => isSellerActive(s)).length,
-            efficiency: buyersRef.current.length ? ((trans / buyersRef.current.length) * 100).toFixed(1) + '%' : '-',
-            allocativeEfficiency: maxSurplus <= 0
-                ? realizedSurplus > 0
-                    ? '100%'
-                    : '-'
-                : ((realizedSurplus / maxSurplus) * 100).toFixed(1) + '%',
-            deadweightLoss: '₱' + Math.max(0, maxSurplus - realizedSurplus).toFixed(0),
-        };
+        const next = computeStats(transactionLog, sellersRef.current, buyersRef.current, isSellerActive);
 
         const prev = lastStatsRef.current;
         if (

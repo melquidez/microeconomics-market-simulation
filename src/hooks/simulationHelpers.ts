@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Buyer, Seller, DisruptorState, TransactionLogEntry, SimStatus } from '../types';
+import { Buyer, Seller, DisruptorState, TransactionLogEntry, SimStatus, Stats } from '../types';
 
 // Animation state for visual effects
 export type Animation = {
@@ -123,6 +123,45 @@ export const computeRealizedSurplus = (log: TransactionLogEntry[]): number => {
         if (isSuccessfulOutcome(l.outcome)) realized += l.buyerBudget - l.sellerCost;
     }
     return realized;
+};
+
+// Pure market-stats computation: deal counts, average clearing price, active
+// agent tallies, and the welfare metrics (allocative efficiency + deadweight
+// loss). Kept pure and free of React so it can be unit-tested directly.
+//
+// Welfare basis: max/realized surplus use the seller's BASE cost, so taxes and
+// subsidies (government transfers) are netted out of allocative efficiency and
+// deadweight loss. The equilibrium chart still uses the effective cost (which
+// includes tax/subsidy) for the supply curve and wedges.
+export const computeStats = (
+    transactionLog: TransactionLogEntry[],
+    sellers: Seller[],
+    buyers: Buyer[],
+    isSellerActive: (seller: Seller) => boolean
+): Stats => {
+    const trans = transactionLog.filter((l) => isSuccessfulOutcome(l.outcome)).length;
+    const noDeals = buyers.filter((b) => b.status === 'noDeal').length;
+    const tlogs = transactionLog.filter((l) => isSuccessfulOutcome(l.outcome));
+    const avg = tlogs.length ? (tlogs.reduce((s, l) => s + l.clearingPrice, 0) / tlogs.length).toFixed(1) : '0';
+
+    const maxSurplus = computeMaxSurplus(sellers, buyers, (s) => s.costOfGoods);
+    const realizedSurplus = computeRealizedSurplus(transactionLog);
+
+    return {
+        transactions: trans,
+        noDeals,
+        avgPrice: avg !== '0' ? '₱' + avg : '0',
+        activeBuyers: buyers.filter((b) => b.status === 'searching').length,
+        activeSellers: sellers.filter((s) => isSellerActive(s)).length,
+        efficiency: buyers.length ? ((trans / buyers.length) * 100).toFixed(1) + '%' : '-',
+        allocativeEfficiency:
+            maxSurplus <= 0
+                ? realizedSurplus > 0
+                    ? '100%'
+                    : '-'
+                : ((realizedSurplus / maxSurplus) * 100).toFixed(1) + '%',
+        deadweightLoss: '₱' + Math.max(0, maxSurplus - realizedSurplus).toFixed(0),
+    };
 };
 
 
