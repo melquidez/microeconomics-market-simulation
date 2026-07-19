@@ -44,6 +44,20 @@ export interface TransactionLogEntry {
     sellerOrigAsk: number;
     sellerEffAsk: number;
     sellerCost: number;
+    // Effective cost the seller actually bore on THIS transaction: base cost
+    // +/- any tax/subsidy in force at the time. Shown in the table so that
+    // Profit = Eff.Ask - Eff.Cost always reconciles. (The base `sellerCost`
+    // above is still what the welfare/DWL math uses, because tax/subsidy are
+    // transfers and are netted out of allocative efficiency.)
+    sellerEffCost: number;
+    // Policy amounts applied to this specific transaction (0 when inactive).
+    taxApplied: number;
+    subsidyApplied: number;
+    // Whether dynamic pricing was active at the time (seller raises their ask
+    // after each sale) and the buyer's bargaining power, so the detail popup
+    // can accurately explain a raised ask or a negotiated price.
+    dynamicPricing: boolean;
+    bargainPct: number;
     sellerProfit: number;
     buyerBudget: number;
     buyerSurplus: number;

@@ -162,12 +162,15 @@ export const useSimulation = (initialConfig: Config) => {
                     profit,
                     surplus,
                     origAsk,
-                    proposedPrice
+                    proposedPrice,
+                    disruptors,
+                    dynamicPricing,
+                    bargainPct
                 );
                 return [...prev, entry];
             });
         },
-        [round]
+        [round, disruptors, dynamicPricing, bargainPct]
     );
 
 

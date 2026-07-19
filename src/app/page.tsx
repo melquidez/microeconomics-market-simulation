@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ChartAnnotations, Theme } from '../types';
+import { ChartAnnotations, Theme, TransactionLogEntry } from '../types';
 import { useSimulation } from '../hooks/useSimulation';
 import { Canvas } from '../components/Canvas';
 import { Controls } from '../components/Controls';
@@ -12,6 +12,7 @@ import { Chart } from '../components/Chart';
 import { LogTable } from '../components/LogTable';
 
 import { SummaryModal } from '@/components/SummaryModal';
+import { TransactionDetailModal } from '@/components/TransactionDetailModal';
 import { VersionBadge } from '@/components/VersionBadge';
 import { useTheme } from 'next-themes';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -39,6 +40,8 @@ function App() {
 
     const [summaryDismissed, setSummaryDismissed] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<number | null>(null);
+    const [detailEntry, setDetailEntry] = useState<TransactionLogEntry | null>(null);
+    const [detailOpen, setDetailOpen] = useState(false);
 
     const showSummary = sim.status === 'roundEnd' && !summaryDismissed;
 
@@ -399,12 +402,29 @@ function App() {
                         disruptorEvents={sim.disruptorEvents}
                         equilibrium={equilibrium}
                         disruptorAnnotations={disruptorAnnotations}
-                        onDealClick={setSelectedTransaction}
+                        onDealClick={(tnum) => {
+                            setSelectedTransaction(tnum);
+                            const e = sim.transactionLog.find(
+                                (l) => l.transactionNum === tnum && l.outcome.startsWith('Transacted')
+                            );
+                            if (e) {
+                                setDetailEntry(e);
+                                setDetailOpen(true);
+                            }
+                        }}
                         theme={theme}
                     />
                 </div>
 
-                <LogTable logs={sim.transactionLog} selectedTransaction={selectedTransaction} />
+                <LogTable
+                    logs={sim.transactionLog}
+                    selectedTransaction={selectedTransaction}
+                    onRowClick={(entry) => {
+                        setSelectedTransaction(entry.transactionNum);
+                        setDetailEntry(entry);
+                        setDetailOpen(true);
+                    }}
+                />
             </div>
 
 
@@ -416,6 +436,7 @@ function App() {
                 allocativeEfficiency={sim.stats.allocativeEfficiency}
                 deadweightLoss={sim.stats.deadweightLoss}
             />
+            <TransactionDetailModal entry={detailEntry} open={detailOpen} onClose={() => setDetailOpen(false)} />
         </div>
     );
 }

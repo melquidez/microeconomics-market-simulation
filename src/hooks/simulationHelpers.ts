@@ -637,19 +637,34 @@ export const buildTransactionEntry = (
     profit?: number,
     surplus?: number,
     origAsk?: number,
-    proposedPrice?: number
-): TransactionLogEntry => ({
-    round,
-    transactionNum,
-    buyerId: buyer.id,
-    sellerId: seller ? seller.id : '-',
-    sellerOrigAsk: seller ? (origAsk !== undefined ? origAsk : seller.askingPrice) : 0,
-    sellerEffAsk: seller && clearingPrice !== undefined ? clearingPrice : 0,
-    sellerCost: cost !== undefined ? cost : 0,
-    sellerProfit: profit !== undefined ? profit : 0,
-    buyerBudget: buyer.maxBudget,
-    buyerSurplus: surplus !== undefined ? surplus : 0,
-    outcome,
-    clearingPrice: clearingPrice || 0,
-    proposedPrice,
-});
+    proposedPrice?: number,
+    disruptors?: DisruptorState,
+    dynamicPricing?: boolean,
+    bargainPct?: number
+): TransactionLogEntry => {
+    // Effective cost actually borne by the seller on this deal (base cost +/-
+    // any tax/subsidy), so the table can show Profit = Eff.Ask - Eff.Cost.
+    const effCost = seller && disruptors ? getEffectiveCost(seller, disruptors) : 0;
+    const taxApplied = disruptors?.tax?.amount ?? 0;
+    const subsidyApplied = disruptors?.subsidy?.amount ?? 0;
+    return {
+        round,
+        transactionNum,
+        buyerId: buyer.id,
+        sellerId: seller ? seller.id : '-',
+        sellerOrigAsk: seller ? (origAsk !== undefined ? origAsk : seller.askingPrice) : 0,
+        sellerEffAsk: seller && clearingPrice !== undefined ? clearingPrice : 0,
+        sellerCost: cost !== undefined ? cost : 0,
+        sellerEffCost: effCost,
+        taxApplied,
+        subsidyApplied,
+        dynamicPricing: dynamicPricing ?? false,
+        bargainPct: bargainPct ?? 0,
+        sellerProfit: profit !== undefined ? profit : 0,
+        buyerBudget: buyer.maxBudget,
+        buyerSurplus: surplus !== undefined ? surplus : 0,
+        outcome,
+        clearingPrice: clearingPrice || 0,
+        proposedPrice,
+    };
+};

@@ -6,9 +6,10 @@ import { faList } from '@fortawesome/free-solid-svg-icons';
 interface LogTableProps {
     logs: TransactionLogEntry[];
     selectedTransaction?: number | null;
+    onRowClick?: (entry: TransactionLogEntry) => void;
 }
 
-export const LogTable: React.FC<LogTableProps> = ({ logs, selectedTransaction }) => {
+export const LogTable: React.FC<LogTableProps> = ({ logs, selectedTransaction, onRowClick }) => {
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -40,7 +41,7 @@ export const LogTable: React.FC<LogTableProps> = ({ logs, selectedTransaction })
                             <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Seller</th>
                             <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Orig. Ask</th>
                             <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Eff. Ask</th>
-                            <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Cost</th>
+                            <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Eff. Cost</th>
                             <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Profit</th>
                             <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Budget</th>
                             <th className="text-[11px] font-semibold text-muted uppercase tracking-wide">Surplus</th>
@@ -57,6 +58,7 @@ export const LogTable: React.FC<LogTableProps> = ({ logs, selectedTransaction })
                                 <tr
                                 key={idx}
                                 data-tnum={entry.transactionNum}
+                                onClick={() => onRowClick?.(entry)}
                                 className={
                                     (typeof entry.outcome === 'string' && entry.outcome.startsWith('Transacted') ? 'text-foreground' : 'text-muted') +
                                     (selectedTransaction != null && entry.transactionNum > 0 && entry.transactionNum === selectedTransaction ? ' bg-accent/20' : '') +
@@ -73,7 +75,13 @@ export const LogTable: React.FC<LogTableProps> = ({ logs, selectedTransaction })
                                         {typeof entry.sellerEffAsk === 'number' ? '₱' + entry.sellerEffAsk : entry.sellerEffAsk}
                                     </td>
                                     <td className="text-xs py-1 px-2 border-b border-border">
-                                        {typeof entry.sellerCost === 'number' ? '₱' + entry.sellerCost : entry.sellerCost}
+                                        {typeof entry.sellerEffCost === 'number' ? '₱' + entry.sellerEffCost : entry.sellerEffCost}
+                                        {entry.taxApplied > 0 && (
+                                            <span className="ml-1 text-[10px] text-danger font-semibold">T+{entry.taxApplied}</span>
+                                        )}
+                                        {entry.subsidyApplied > 0 && (
+                                            <span className="ml-1 text-[10px] text-success font-semibold">S−{entry.subsidyApplied}</span>
+                                        )}
                                     </td>
                                     <td className={`text-xs py-1 px-2 border-b border-border ${entry.sellerProfit > 0 ? 'text-success' : 'text-muted'}`}>
                                         {typeof entry.sellerProfit === 'number' ? '₱' + entry.sellerProfit.toFixed(0) : entry.sellerProfit}
