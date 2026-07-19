@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { Buyer, Seller, DisruptorState, TransactionLogEntry, SimStatus, Stats } from '../types';
 
 // Animation state for visual effects

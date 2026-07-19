@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Test files are checked by Vitest, not the app build/lint gates.
+    "**/*.test.ts",
+    "vitest.config.ts",
   ]),
 ]);
 
